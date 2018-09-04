@@ -14,7 +14,7 @@ namespace Syousetsu
 {
     public class Methods
     {
-        public static CancellationTokenSource AddDownloadJob(Syousetsu.Constants details, ProgressBar pb)
+        public static CancellationTokenSource AddDownloadJob(Syousetsu.Constants details, ProgressBar pb, Label lb)
         {
             int max = Convert.ToInt32(pb.Maximum);
 
@@ -42,6 +42,7 @@ namespace Syousetsu
             CancellationTokenSource ct = new CancellationTokenSource();
             Task.Factory.StartNew(() =>
             {
+                bool cancelled = false;
                 for (int ctr = i; ctr <= max; ctr++)
                 {
                     string subLink = details.Link + ctr;
@@ -57,13 +58,22 @@ namespace Syousetsu
                     if (ct.IsCancellationRequested)
                     {
                         // another thread decided to cancel
+                        cancelled = true;
                         break;
                     }
                 }
                 pb.Dispatcher.Invoke((Action)(() =>
                 {
-                    pb.Value = max;
                     pb.ToolTip = null;
+                    pb.Tag = 1;
+
+                    if (cancelled)
+                        lb.Content = lb.Content + " download cancelled";
+                    else
+                    {
+                        pb.Value = max;
+                        lb.Content = lb.Content + " finished";
+                    }
                 }));
             }, ct.Token);
 
