@@ -31,4 +31,4 @@ Download chapters from Syosetsu ni Narou
 - Replaces illegal characters on filename with "□"
 - No chapter list generation for wayback machine
 
-**[Releases Here](https://github.com/LordZero25/Syosetu-Downloader/releases/)**
+**[Releases Here](https://github.com/setsumi/Syosetu-Downloader/releases/)**
