@@ -1,5 +1,3 @@
-/src/packages
-/src/DLL
 /**/.vs/
 /**/x64
 /**/bin
@@ -7,7 +5,6 @@
 /**/Debug
 /**/Release
 
-packages.config
 *.ncb
 *.user
 *.rsuser
