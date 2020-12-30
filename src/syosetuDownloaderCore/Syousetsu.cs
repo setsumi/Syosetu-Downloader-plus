@@ -64,16 +64,17 @@ namespace Syousetsu
                 }
                 pb.Dispatcher.Invoke((Action)(() =>
                 {
+                    //pb.Value = max;
                     pb.ToolTip = null;
                     pb.Tag = 1;
-
                     if (cancelled)
-                        lb.Content = lb.Content + " download cancelled";
+                        lb.Content = "download cancelled - " + lb.Content;
                     else
                     {
                         pb.Value = max;
-                        lb.Content = lb.Content + " finished";
+                        lb.Content = "finished - " + lb.Content;
                     }
+
                 }));
             }, ct.Token);
 
@@ -311,7 +312,7 @@ namespace Syousetsu
                 Regex r = new Regex(pattern);
                 Match m = r.Match(node.ChildNodes["dd"].OuterHtml);
                 int current = Convert.ToInt32(m.Groups["num"].Value);
-                details.ChapterTitle.Add(m.Groups["title"].Value);
+                details.ChapterTitle.Add(m.Groups["title"].Value.TrimStart().TrimEnd());
 
             }
         }
@@ -343,7 +344,7 @@ namespace Syousetsu
                 chapter[1] += "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n\n";
                 chapter[1] += "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n";
                 chapter[1] += "<head>\n";
-                chapter[1] += "\t<title></title>\n";
+                chapter[1] += "\t<title>" + Methods.GetChapterTitle(doc).TrimStart().TrimEnd() + "</title>\n";
                 chapter[1] += "\t<link href=\"ChapterStyle.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
                 chapter[1] += "</head>\n";
                 chapter[1] += "<body>\n ";
@@ -395,18 +396,33 @@ namespace Syousetsu
             //create novel folder if it doesn't exist
             CheckDirectory(details);
 
+            HtmlNode ptitleNode = doc.DocumentNode.SelectSingleNode("//title");
+            HtmlNode stitleNode = doc.DocumentNode.SelectSingleNode("//p[@class='series_title']");
+            HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='novel_title']");
+            HtmlNode writerNode = doc.DocumentNode.SelectSingleNode("//div[@class='novel_writername']");
+
             HtmlNode tocNode = doc.DocumentNode.SelectSingleNode("//div[@class='index_box']");
             HtmlNodeCollection cssNodeList = doc.DocumentNode.SelectNodes("//link[@rel='stylesheet']");
 
             var cssNode = (from n in cssNodeList
-                           where n.Attributes["href"].Value.Contains("ncout.css") || n.Attributes["href"].Value.Contains("ncout2.css")
+                           where n.Attributes["href"].Value.Contains("ncout.css") ||
+                           n.Attributes["href"].Value.Contains("ncout2.css") ||
+                           n.Attributes["href"].Value.Contains("kotei.css") ||
+                           n.Attributes["href"].Value.Contains("reset.css")
                            select n).ToList();
 
             //get css link and download
-            string pattern = "(href=\")(?<link>.+)(?=\" media)";
-            Regex r = new Regex(pattern);
-            Match m = r.Match(cssNode[0].OuterHtml);
-            string cssink = m.Groups["link"].Value;
+            List<string> cssink = new List<string>();
+            string pattern;
+            Regex r;
+            Match m;
+            foreach (HtmlNode node in cssNode)
+            {
+                pattern = "(href=\")(?<link>.+)(?=\" media)";
+                r = new Regex(pattern);
+                m = r.Match(node.OuterHtml);
+                cssink.Add(m.Groups["link"].Value);
+            }
             DownloadCss(details, cssink);
 
             StringBuilder sb = new StringBuilder();
@@ -414,9 +430,26 @@ namespace Syousetsu
             sb.AppendLine("<head>");
             sb.AppendLine("\t<meta charset=\"UTF-8\">");
             sb.AppendLine("\t<link rel=\"stylesheet\" type=\"text/css\" href=\"" + details.SeriesCode + ".css\" media=\"screen,print\" />");
+            if (ptitleNode != null) sb.AppendLine(ptitleNode.OuterHtml);
             sb.AppendLine("</head>");
 
             sb.AppendLine("<body>");
+
+            if (stitleNode != null)
+            {
+                if (null != stitleNode.ChildNodes["a"] &&
+                    null != stitleNode.ChildNodes["a"].Attributes["href"])
+                {
+                    var href = stitleNode.ChildNodes["a"].Attributes["href"].Value;
+                    if (!string.IsNullOrEmpty(href))
+                    {
+                        stitleNode.ChildNodes["a"].Attributes["href"].Value = "https://ncode.syosetu.com" + href;
+                    }
+                }
+                sb.AppendLine(stitleNode.OuterHtml);
+            }
+            if (titleNode != null) sb.AppendLine(titleNode.OuterHtml);
+            if (writerNode != null) sb.AppendLine(writerNode.OuterHtml);
 
             //edit all href
             int i = 1;
@@ -428,7 +461,7 @@ namespace Syousetsu
                 r = new Regex(pattern);
                 m = r.Match(node.ChildNodes["dd"].OuterHtml);
                 int current = Convert.ToInt32(m.Groups["num"].Value);
-                details.ChapterTitle.Add(m.Groups["title"].Value);
+                //details.ChapterTitle.Add(m.Groups["title"].Value);
 
                 //edit href
                 string fileName = details.FilenameFormat;
@@ -449,20 +482,29 @@ namespace Syousetsu
             File.WriteAllText(Path.Combine(details.Path, details.SeriesTitle, details.SeriesCode + ".htm"), sb.ToString());
         }
 
-        private static void DownloadCss(Syousetsu.Constants details, string link)
+        private static void DownloadCss(Syousetsu.Constants details, List<string> link)
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(link);
-            request.Method = "GET";
-            request.UserAgent = Constants.UserAgent;
+            string cssfile = Path.Combine(details.Path, details.SeriesTitle, details.SeriesCode + ".css");
+            File.WriteAllText(cssfile, "");
 
-
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            var stream = response.GetResponseStream();
-
-            using (StreamReader reader = new StreamReader(stream))
+            foreach (string f in link)
             {
-                string css = reader.ReadToEnd();
-                File.WriteAllText(Path.Combine(details.Path, details.SeriesTitle, details.SeriesCode + ".css"), css);
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(f);
+                request.Method = "GET";
+                request.UserAgent = Constants.UserAgent;
+
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                var stream = response.GetResponseStream();
+
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    string css = reader.ReadToEnd();
+                    using (StreamWriter writer = File.AppendText(cssfile))
+                    {
+                        writer.Write(css);
+                        writer.Close();
+                    }
+                }
             }
         }
 

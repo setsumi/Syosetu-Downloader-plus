@@ -32,6 +32,14 @@ namespace syosetuDownloader
         public MainWindow()
         {
             InitializeComponent();
+
+            ServicePointManager.Expect100Continue = true;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
+                | SecurityProtocolType.Ssl3
+                | (SecurityProtocolType)768
+                | (SecurityProtocolType)3072
+                | (SecurityProtocolType)12288;
+
         }
 
         public void GetFilenameFormat()
@@ -93,6 +101,7 @@ namespace syosetuDownloader
             pb.Maximum = (_end == String.Empty) ? Syousetsu.Methods.GetTotalChapters(toc) : Convert.ToDouble(_end);
             pb.ToolTip = "Click to stop download";
             pb.Height = 10;
+            pb.Tag = 0;
 
             Separator s = new Separator();
             s.Height = 5;
@@ -114,7 +123,7 @@ namespace syosetuDownloader
                 Syousetsu.Create.GenerateTableOfContents(sc, toc);
             }
 
-            System.Threading.CancellationTokenSource ct = Syousetsu.Methods.AddDownloadJob(sc, pb);
+            System.Threading.CancellationTokenSource ct = Syousetsu.Methods.AddDownloadJob(sc, pb, lb);
             pb.MouseDown += (snt, evt) =>
             {
                 ct.Cancel();
@@ -148,7 +157,7 @@ namespace syosetuDownloader
 
         private void btnDelete_Click(object sender, RoutedEventArgs e)
         {
-            _controls.Where((c) => c.ProgressBar.Value == c.ProgressBar.Maximum).ToList().ForEach((c) =>
+            _controls.Where((c) => (int)c.ProgressBar.Tag != 0).ToList().ForEach((c) =>
             {
                 stackPanel1.Children.Remove(c.Label);
                 stackPanel1.Children.Remove(c.ProgressBar);
@@ -156,7 +165,7 @@ namespace syosetuDownloader
             });
 
             _controls = (from c in _controls
-                         where c.ProgressBar.Value != c.ProgressBar.Maximum
+                         where (int)c.ProgressBar.Tag == 0
                          select c).ToList();
         }
     }
