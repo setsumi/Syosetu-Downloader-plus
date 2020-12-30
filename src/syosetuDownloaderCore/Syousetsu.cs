@@ -123,6 +123,7 @@ namespace Syousetsu
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(link);
             request.Method = "GET";
             request.CookieContainer = cookies;
+            request.UserAgent = Constants.UserAgent;
 
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             var stream = response.GetResponseStream();
@@ -208,6 +209,8 @@ namespace Syousetsu
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(link);
             request.Method = "GET";
             request.CookieContainer = cookies;
+            request.UserAgent = Constants.UserAgent;
+
 
             try
             {
@@ -450,6 +453,8 @@ namespace Syousetsu
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(link);
             request.Method = "GET";
+            request.UserAgent = Constants.UserAgent;
+
 
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             var stream = response.GetResponseStream();

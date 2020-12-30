@@ -22,7 +22,7 @@ namespace Syousetsu
     public class Constants
     {
         public enum FileType { Text, HTML };
-        private CookieContainer _cookies = new CookieContainer();
+        CookieContainer _cookies = new CookieContainer();
         string _title = String.Empty;
         string _start = String.Empty;
         string _end = String.Empty;
@@ -30,8 +30,9 @@ namespace Syousetsu
         string _path = String.Empty;
         string _link = String.Empty;
         string _seriesCode = String.Empty;
-        private string _fileNameFormat = String.Empty;
-        private List<string> chapterTitle = new List<string>();
+        string _fileNameFormat = String.Empty;
+        List<string> chapterTitle = new List<string>();
+        const string userAgent = "Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/70.0";
 
         public CookieContainer SyousetsuCookie
         {
@@ -100,6 +101,14 @@ namespace Syousetsu
         {
             get { return chapterTitle; }
             set { chapterTitle = value; }
+        }
+
+        public static string UserAgent
+        {
+            get
+            {
+                return userAgent;
+            }
         }
     }
 }
