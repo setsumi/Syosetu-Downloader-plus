@@ -1,8 +1,0 @@
-C:\Users\ACER\Source\Repos\LordZero25\Syosetu-Downloader\src\syosetuDownloaderCore\obj\Debug\syosetuDownloaderCore.csprojAssemblyReference.cache
-C:\Users\ACER\Source\Repos\LordZero25\Syosetu-Downloader\src\syosetuDownloaderCore\bin\Debug\syosetuDownloaderCore.dll
-C:\Users\ACER\Source\Repos\LordZero25\Syosetu-Downloader\src\syosetuDownloaderCore\bin\Debug\syosetuDownloaderCore.pdb
-C:\Users\ACER\Source\Repos\LordZero25\Syosetu-Downloader\src\syosetuDownloaderCore\obj\Debug\syosetuDownloaderCore.csproj.CopyComplete
-C:\Users\ACER\Source\Repos\LordZero25\Syosetu-Downloader\src\syosetuDownloaderCore\obj\Debug\syosetuDownloaderCore.dll
-C:\Users\ACER\Source\Repos\LordZero25\Syosetu-Downloader\src\syosetuDownloaderCore\obj\Debug\syosetuDownloaderCore.pdb
-C:\Users\ACER\Source\Repos\LordZero25\Syosetu-Downloader\src\syosetuDownloaderCore\bin\Debug\CommandLine.dll
-C:\Users\ACER\Source\Repos\LordZero25\Syosetu-Downloader\src\syosetuDownloaderCore\bin\Debug\CommandLine.xml

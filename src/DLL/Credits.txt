@@ -1,2 +1,0 @@
-CommandLine.dll
-CommandLine.xml: https://commandline.codeplex.com/
