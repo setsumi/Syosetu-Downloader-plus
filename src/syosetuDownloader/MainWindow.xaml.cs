@@ -13,6 +13,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Net;
 using HtmlAgilityPack;
+using System.IO;
+using System.Diagnostics;
 
 namespace syosetuDownloader
 {
@@ -29,6 +31,16 @@ namespace syosetuDownloader
         Syousetsu.Constants.FileType _fileType;
         List<Syousetsu.Controls> _controls = new List<Syousetsu.Controls>();
 
+        Shell32.Shell _shell;
+        string _exe_dir;
+
+        public class NovelDrop
+        {
+            public string Novel { get; set; }
+            public string Link { get; set; }
+            public override string ToString() { return Link; }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -40,6 +52,34 @@ namespace syosetuDownloader
                 | (SecurityProtocolType)3072
                 | (SecurityProtocolType)12288;
 
+            _exe_dir = System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            _shell = new Shell32.Shell();
+
+            PopulateNovelsURLs(txtLink);
+        }
+
+        void PopulateNovelsURLs(ComboBox cb)
+        {
+            List<NovelDrop> items = new List<NovelDrop>();
+
+            // Get the shortcut's folder.
+            Shell32.Folder shortcut_folder = _shell.NameSpace(_exe_dir);
+
+            string[] fileEntries = Directory.GetFiles(_exe_dir);
+            foreach (string file in fileEntries)
+            {
+                if (System.IO.Path.GetExtension(file).Equals(".url", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    //Get the shortcut's file.
+                    Shell32.FolderItem folder_item =
+                        shortcut_folder.Items().Item(System.IO.Path.GetFileName(file));
+                    // Get shortcut's information.
+                    Shell32.ShellLinkObject lnk = (Shell32.ShellLinkObject)folder_item.GetLink;
+                    items.Add(new NovelDrop() { Novel = folder_item.Name, Link = lnk.Path });
+                }
+            }
+            // Assign data to combobox
+            cb.ItemsSource = items;
         }
 
         public void GetFilenameFormat()
@@ -167,6 +207,22 @@ namespace syosetuDownloader
             _controls = (from c in _controls
                          where (int)c.ProgressBar.Tag == 0
                          select c).ToList();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Focus editable combobox
+            var textBox = (txtLink.Template.FindName("PART_EditableTextBox", txtLink) as TextBox);
+            if (textBox != null)
+            {
+                textBox.Focus();
+                textBox.SelectionStart = textBox.Text.Length;
+            }
+        }
+
+        private void btnExplore_Click(object sender, RoutedEventArgs e)
+        {
+            _shell.Explore(_exe_dir);
         }
     }
 }

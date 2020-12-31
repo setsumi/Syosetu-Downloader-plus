@@ -6,7 +6,10 @@ Download chapters from Syosetsu ni Narou
 **Changes**
 - HTML titles
 - TOC: Series name, novel name, author name
-- GUI: Conpleted or cancelled downloads are marked as such
+- GUI: Completed or cancelled downloads are marked as such
+    - Dropdown list of links populated from (.URL) web shortcuts placed in program folder
+    - Resizable window
+    
 
 
 Original project **[here](https://github.com/LordZero25/Syosetu-Downloader/)**
