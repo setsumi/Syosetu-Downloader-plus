@@ -16,6 +16,7 @@ using HtmlAgilityPack;
 using System.IO;
 using System.Diagnostics;
 using System.Media;
+using System.Windows.Threading;
 
 namespace syosetuDownloader
 {
@@ -34,6 +35,7 @@ namespace syosetuDownloader
 
         Shell32.Shell _shell;
         string _exe_dir;
+        readonly string _version = "2.4.0 plus 3";
 
         public class NovelDrop
         {
@@ -62,9 +64,17 @@ namespace syosetuDownloader
             _exe_dir = System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
             _shell = new Shell32.Shell();
 
+            this.Title += _version;
             txtLink.ToolTip = "(Alt+↓)  dropdown list, populated from (.url) web shortcuts\n"
                 + "(Ctrl+Enter)  open url in browser";
+            cbSite.ToolTip = "(Alt+↓)  dropdown list, populated from website.txt\n"
+                + "(Ctrl+Enter)  open site in browser";
             PopulateNovelsURLs(txtLink);
+            PopulateSiteLinks(cbSite);
+            if (cbSite.Items.Count > 0)
+            {
+                cbSite.SelectedIndex = 0;
+            }
         }
 
         void PopulateNovelsURLs(ComboBox cb)
@@ -90,7 +100,7 @@ namespace syosetuDownloader
             // Assign data to combobox
             cb.ItemsSource = items;
         }
-        void PopulateSiteLinks(ListBox lb)
+        void PopulateSiteLinks(ComboBox cb)
         {
             List<SiteLink> items = new List<SiteLink>();
             try
@@ -118,7 +128,7 @@ namespace syosetuDownloader
                 } while (line != null);
             }
             catch { };
-            lb.ItemsSource = items;
+            cb.ItemsSource = items;
         }
 
         public void GetFilenameFormat()
@@ -267,7 +277,7 @@ namespace syosetuDownloader
         private void txtLink_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             ComboBox combobox = sender as ComboBox;
-            // Open link in browser
+            // Open novel link in browser
             if (e.Key == Key.Enter && e.KeyboardDevice.Modifiers == ModifierKeys.Control)
             {
                 if (!String.IsNullOrEmpty(combobox.Text) && combobox.Text.Length > 8 &&
@@ -278,5 +288,19 @@ namespace syosetuDownloader
                 }
             }
         }
+
+        private void cbSite_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            ComboBox combobox = sender as ComboBox;
+            // Open site in browser
+            if (e.Key == Key.Enter && e.KeyboardDevice.Modifiers == ModifierKeys.Control)
+            {
+                if (combobox.SelectedIndex != -1)
+                {
+                    _shell.Open(((SiteLink)combobox.SelectedItem).Link);
+                }
+            }
+        }
+
     }
 }
