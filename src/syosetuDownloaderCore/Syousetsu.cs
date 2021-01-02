@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using System.Net;
 using System.IO;
+using System.Windows.Media;
 
 namespace Syousetsu
 {
@@ -68,11 +69,15 @@ namespace Syousetsu
                     pb.ToolTip = null;
                     pb.Tag = 1;
                     if (cancelled)
-                        lb.Content = "download cancelled - " + lb.Content;
+                    {
+                        lb.Content = "download aborted - " + lb.Content;
+                        //lb.Background = Brushes.MistyRose;
+                    }
                     else
                     {
                         pb.Value = max;
                         lb.Content = "finished - " + lb.Content;
+                        //lb.Background = Brushes.Aquamarine;
                     }
 
                 }));

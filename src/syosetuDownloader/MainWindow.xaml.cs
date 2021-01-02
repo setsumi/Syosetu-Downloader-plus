@@ -35,7 +35,7 @@ namespace syosetuDownloader
 
         Shell32.Shell _shell;
         string _exe_dir;
-        readonly string _version = "2.4.0 plus 3";
+        readonly string _version = "2.4.0 plus 4";
 
         public class NovelDrop
         {
@@ -147,6 +147,7 @@ namespace syosetuDownloader
             }
         }
 
+        private static Action EmptyDelegate = delegate () { };
         private void btnDownload_Click(object sender, RoutedEventArgs e)
         {
             this._link = txtLink.Text;
@@ -230,6 +231,9 @@ namespace syosetuDownloader
             stackPanel1.Children.Add(lb);
             stackPanel1.Children.Add(pb);
             stackPanel1.Children.Add(s);
+            scrollViewer1.ScrollToLeftEnd();
+            scrollViewer1.ScrollToBottom();
+            scrollViewer1.Dispatcher.Invoke(DispatcherPriority.Render, EmptyDelegate);
 
             _controls.Add(new Syousetsu.Controls { ID = _row, Label = lb, ProgressBar = pb, Separator = s });
         }
