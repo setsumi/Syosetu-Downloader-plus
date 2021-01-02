@@ -4,7 +4,7 @@
         Title="Narou Downloader 2.4.0 plus 2" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" d:DesignWidth="380" SizeToContent="WidthAndHeight" WindowStartupLocation="Manual" Loaded="Window_Loaded" Height="364" Width="380" MaxWidth="500" MaxHeight="600">
     <Grid>
         <Label Content="Link:" Height="28" HorizontalAlignment="Left" x:Name="lblLink" VerticalAlignment="Top" Margin="5,5,0,0" Width="70" />
-        <ComboBox x:Name="txtLink" Margin="45,6,12,0" VerticalAlignment="Top" Height="23" IsEditable="True" ToolTip="(Alt+↓)  dropdown list populated from (.url) web shortcuts">
+        <ComboBox x:Name="txtLink" Margin="45,6,12,0" VerticalAlignment="Top" Height="23" IsEditable="True" PreviewKeyDown="txtLink_PreviewKeyDown">
             <ComboBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">

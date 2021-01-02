@@ -15,6 +15,7 @@ using System.Net;
 using HtmlAgilityPack;
 using System.IO;
 using System.Diagnostics;
+using System.Media;
 
 namespace syosetuDownloader
 {
@@ -40,6 +41,12 @@ namespace syosetuDownloader
             public string Link { get; set; }
             public override string ToString() { return Link; }
         }
+        public class SiteLink
+        {
+            public string Name { get; set; }
+            public string Link { get; set; }
+            public override string ToString() { return Name + "\t" + Link; }
+        }
 
         public MainWindow()
         {
@@ -55,6 +62,8 @@ namespace syosetuDownloader
             _exe_dir = System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
             _shell = new Shell32.Shell();
 
+            txtLink.ToolTip = "(Alt+↓)  dropdown list, populated from (.url) web shortcuts\n"
+                + "(Ctrl+Enter)  open url in browser";
             PopulateNovelsURLs(txtLink);
         }
 
@@ -80,6 +89,36 @@ namespace syosetuDownloader
             }
             // Assign data to combobox
             cb.ItemsSource = items;
+        }
+        void PopulateSiteLinks(ListBox lb)
+        {
+            List<SiteLink> items = new List<SiteLink>();
+            try
+            {
+                int odd = 1;
+                SiteLink link = null;
+                string input = File.ReadAllText(_exe_dir + "\\website.txt");
+                StringReader reader = new StringReader(input);
+                string line = string.Empty;
+                do
+                {
+                    line = reader.ReadLine();
+                    if (line != null) // do something with the line
+                    {
+                        if (odd++ % 2 != 0)
+                        {
+                            link = new SiteLink { Name = line };
+                        }
+                        else
+                        {
+                            link.Link = line;
+                            items.Add(link);
+                        }
+                    }
+                } while (line != null);
+            }
+            catch { };
+            lb.ItemsSource = items;
         }
 
         public void GetFilenameFormat()
@@ -223,6 +262,21 @@ namespace syosetuDownloader
         private void btnExplore_Click(object sender, RoutedEventArgs e)
         {
             _shell.Explore(_exe_dir);
+        }
+
+        private void txtLink_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            ComboBox combobox = sender as ComboBox;
+            // Open link in browser
+            if (e.Key == Key.Enter && e.KeyboardDevice.Modifiers == ModifierKeys.Control)
+            {
+                if (!String.IsNullOrEmpty(combobox.Text) && combobox.Text.Length > 8 &&
+                    combobox.Text.Substring(0, 8).Equals("https://", StringComparison.InvariantCultureIgnoreCase)
+                    )
+                {
+                    _shell.Open(combobox.Text);
+                }
+            }
         }
     }
 }
