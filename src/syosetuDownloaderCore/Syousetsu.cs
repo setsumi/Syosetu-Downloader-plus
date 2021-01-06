@@ -234,7 +234,7 @@ namespace Syousetsu
                     return doc;
                 }
             }
-            catch (WebException e)
+            catch (WebException)
             {
                 StringBuilder html = new StringBuilder();
                 html.Append("<html>");
@@ -349,7 +349,8 @@ namespace Syousetsu
                 chapter[1] += "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n\n";
                 chapter[1] += "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n";
                 chapter[1] += "<head>\n";
-                chapter[1] += "\t<title>" + Methods.GetChapterTitle(doc).TrimStart().TrimEnd() + "</title>\n";
+                chapter[1] += $"\t<title>{Methods.GetChapterTitle(doc).TrimStart().TrimEnd()}" +
+                    $" ({current}) {details.SeriesTitle}</title>\n";
                 chapter[1] += "\t<link href=\"ChapterStyle.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
                 chapter[1] += "</head>\n";
                 chapter[1] += "<body>\n ";
@@ -466,12 +467,14 @@ namespace Syousetsu
                 r = new Regex(pattern);
                 m = r.Match(node.ChildNodes["dd"].OuterHtml);
                 int current = Convert.ToInt32(m.Groups["num"].Value);
+                //already filled
                 //details.ChapterTitle.Add(m.Groups["title"].Value);
 
                 //edit href
                 string fileName = details.FilenameFormat;
                 fileName = String.Format(fileName + ".htm", current, details.ChapterTitle[current], details.SeriesCode);
                 node.ChildNodes["dd"].ChildNodes["a"].Attributes["href"].Value = "./" + fileName;
+                node.ChildNodes["dd"].ChildNodes["a"].InnerHtml = "(" + i + ") " + node.ChildNodes["dd"].ChildNodes["a"].InnerHtml;
 
                 if (i <= Convert.ToInt32(details.End))
                 {
