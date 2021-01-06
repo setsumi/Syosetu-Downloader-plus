@@ -7,6 +7,7 @@ Download chapters from Syosetsu ni Narou
 - HTML titles
 - TOC: Series name, novel name, author name
 - GUI: Completed or cancelled downloads are marked as such
+    - Helpful tooltips
     - Dropdown list of links populated from (.URL) web shortcuts placed in program folder
     - Resizable window
     - Sites links
