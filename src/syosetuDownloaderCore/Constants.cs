@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using System.Net;
+using System.IO;
+using System.Windows;
 
 namespace Syousetsu
 {
@@ -21,7 +23,21 @@ namespace Syousetsu
 
     public class Constants
     {
+        public class Chapter
+        {
+            public string title;
+            public string number;
+            public int index;
+            public Chapter(string title, string number, int index)
+            {
+                this.title = title;
+                this.number = number;
+                this.index = index;
+            }
+        }
+
         public enum FileType { Text, HTML };
+        public enum SiteType { Syousetsu, Kakuyomu };
         CookieContainer _cookies = new CookieContainer();
         string _title = String.Empty;
         string _start = String.Empty;
@@ -31,19 +47,78 @@ namespace Syousetsu
         string _link = String.Empty;
         string _seriesCode = String.Empty;
         string _fileNameFormat = String.Empty;
-        List<string> chapterTitle = new List<string>();
+        List<Chapter> _chapters = new List<Chapter>();
         const string userAgent = "Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/70.0";
+        List<string> _userAgentList = new List<string>();
+
+        // Constructor
+        public Constants(string link, string exedir)
+        {
+            _link = link;
+
+            // load user agents from file
+            try
+            {
+                string input = File.ReadAllText(exedir + "\\useragent.ini");
+                StringReader reader = new StringReader(input);
+                string line = null;
+                do
+                {
+                    line = reader.ReadLine();
+                    if (line != null) // do something with the line
+                    {
+                        _userAgentList.Add(line);
+                    }
+                } while (line != null);
+            }
+            catch { };
+        }
+
+        public static SiteType Site(string link)
+        {
+            if (link.Contains("syosetu.com"))
+                return SiteType.Syousetsu;
+            else
+                return SiteType.Kakuyomu;
+        }
+
+        public SiteType Site() => Site(_link);
+
+        public void AddChapter(string title, string number)
+        {
+            _chapters.Add(new Chapter(title, number, _chapters.Count));
+        }
+
+        public Chapter GetChapterByIndex(int index)
+        {
+            return _chapters[index];
+        }
+
+        public Chapter GetChapterByNumber(string number)
+        {
+            foreach (Chapter chapter in _chapters)
+            {
+                if (chapter.number.Equals(number, StringComparison.Ordinal))
+                    return chapter;
+            }
+            return null;
+        }
 
         public CookieContainer SyousetsuCookie
         {
             get
             {
-                Cookie c = new System.Net.Cookie();
-                c.Domain = ".syosetu.com";
-                c.Value = "yes";
-                c.Name = "over18";
+                if (Site() == SiteType.Syousetsu)
+                {
+                    Cookie c = new Cookie
+                    {
+                        Domain = ".syosetu.com",
+                        Value = "yes",
+                        Name = "over18"
+                    };
 
-                _cookies.Add(c);
+                    _cookies.Add(c);
+                }
                 return _cookies;
             }
         }
@@ -97,17 +172,23 @@ namespace Syousetsu
             set { _fileNameFormat = value; }
         }
 
-        public List<string> ChapterTitle
-        {
-            get { return chapterTitle; }
-            set { chapterTitle = value; }
-        }
+        //public List<Chapter> Chapters
+        //{
+        //    get { return _chapters; }
+        //    //set { _chapters = value; }
+        //}
 
-        public static string UserAgent
+        public string UserAgent
         {
             get
             {
-                return userAgent;
+                if (_userAgentList.Count == 0)
+                    return userAgent;
+                else
+                {
+                    Random rnd = new Random();
+                    return _userAgentList[rnd.Next(0, _userAgentList.Count)];
+                }
             }
         }
     }
