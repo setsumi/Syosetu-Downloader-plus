@@ -46,8 +46,13 @@ namespace Syousetsu
                 bool cancelled = false;
                 for (int ctr = i; ctr <= max; ctr++)
                 {
-                    string subLink = details.Link + ctr;
-                    string[] chapter = Create.GenerateContents(details, GetPage(subLink, details.SyousetsuCookie), ctr);
+                    string subLink;
+                    if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
+                        subLink = details.Link + ctr;
+                    else // kakuyomu
+                        subLink = details.Link + "/episodes/" + details.GetChapterByIndex(ctr).number;
+
+                    string[] chapter = Create.GenerateContents(details, GetPage(subLink, details), ctr);
                     Create.SaveFile(details, chapter, ctr);
 
                     pb.Dispatcher.Invoke((Action)(() => { pb.Value = ctr; }));
@@ -86,7 +91,7 @@ namespace Syousetsu
             return ct;
         }
 
-        public static void AddDownloadJob(Syousetsu.Constants details)
+        public static void AddDownloadJob(Constants details)
         {
             int max = Convert.ToInt32(details.End);
 
@@ -114,7 +119,7 @@ namespace Syousetsu
             for (int ctr = i; ctr <= max; ctr++)
             {
                 string subLink = details.Link + ctr;
-                string[] chapter = Create.GenerateContents(details, GetPage(subLink, details.SyousetsuCookie), ctr);
+                string[] chapter = Create.GenerateContents(details, GetPage(subLink, details), ctr);
                 Create.SaveFile(details, chapter, ctr);
 
                 if (upTo != -1 && ctr > upTo)//stop loop if the specifed range is reached
@@ -124,12 +129,12 @@ namespace Syousetsu
             }
         }
 
-        public static HtmlDocument GetTableOfContents(string link, CookieContainer cookies)
+        public static HtmlDocument GetTableOfContents(string link, Constants details)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(link);
             request.Method = "GET";
-            request.CookieContainer = cookies;
-            request.UserAgent = Constants.UserAgent;
+            request.CookieContainer = details.SyousetsuCookie;
+            request.UserAgent = details.UserAgent;
 
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             var stream = response.GetResponseStream();
@@ -144,23 +149,46 @@ namespace Syousetsu
             return doc;
         }
 
-        public static string GetTitle(HtmlDocument doc)
+        public static string GetTitle(HtmlDocument doc, Constants details)
         {
-            HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='novel_title']");
-            return (titleNode == null) ? "title" : titleNode.InnerText.TrimStart().TrimEnd();
+            if (details.Site() == Constants.SiteType.Syousetsu) // syosetu
+            {
+                HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='novel_title']");
+                return (titleNode == null) ? "title" : titleNode.InnerText.TrimStart().TrimEnd();
+            }
+            else // kakuyomu
+            {
+                HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//h1[@id='workTitle']/a");
+                return (titleNode == null) ? "title" : titleNode.InnerText.TrimStart().TrimEnd();
+            }
         }
 
-        public static string GetChapterTitle(HtmlDocument doc)
-        {
-            HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='novel_subtitle']");
-            return (titleNode == null) ? "title" : titleNode.InnerText.TrimStart().TrimEnd();
-        }
+        //public static string GetChapterTitle(HtmlDocument doc, Constants details)
+        //{
+        //    HtmlNode titleNode;
+        //    if(details.Site() == Constants.SiteType.Syousetsu) // syousetsu
+        //        titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='novel_subtitle']");
+        //    else // kakuyomu
+        //        titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='widget-episodeTitle']"); // FAILED !!!
+        //    return (titleNode == null) ? "title" : titleNode.InnerText.TrimStart().TrimEnd();
+        //}
 
-        public static string GetNovelBody(HtmlDocument doc, Constants.FileType fileType)
+        public static string GetNovelBody(HtmlDocument doc, Constants details)
         {
-            HtmlNode novelNode = doc.DocumentNode.SelectSingleNode("//div[@id='novel_honbun']");
-            HtmlNode footerNode = doc.DocumentNode.SelectSingleNode("//div[@id='novel_a']");
-            if (fileType == Constants.FileType.Text)
+            HtmlNode novelNode;
+            HtmlNode footerNode;
+            if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
+            {
+                novelNode = doc.DocumentNode.SelectSingleNode("//div[@id='novel_honbun']");
+                footerNode = doc.DocumentNode.SelectSingleNode("//div[@id='novel_a']");
+            }
+            else // kakuyomu
+            {
+                novelNode = doc.DocumentNode.SelectSingleNode("//div[@id='contentMain-inner']");
+                footerNode = null;
+            }
+
+            if (details.CurrentFileType == Constants.FileType.Text)
             {
                 string s = novelNode.InnerText;
                 if (footerNode != null)
@@ -171,7 +199,7 @@ namespace Syousetsu
 
                 return s;
             }
-            else if (fileType == Constants.FileType.HTML)
+            else if (details.CurrentFileType == Constants.FileType.HTML)
             {
                 string[] s = novelNode.InnerText.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
 
@@ -199,24 +227,31 @@ namespace Syousetsu
             return String.Empty;
         }
 
-        public static int GetTotalChapters(HtmlDocument doc)
+        public static int GetTotalChapters(HtmlDocument doc, Syousetsu.Constants details)
         {
-            string pattern = "(href=\"/)(?<series>.+)/(?<num>.+)/\">(?<title>.+)(?=</a>)";
-            Regex r = new Regex(pattern);
+            if (details.Site() == Constants.SiteType.Syousetsu) // syosetu
+            {
+                string pattern = "(href=\"/)(?<series>.+)/(?<num>.+)/\">(?<title>.+)(?=</a>)";
+                Regex r = new Regex(pattern);
 
-            HtmlNodeCollection chapterNode = doc.DocumentNode.SelectNodes("//div[@class='index_box']/dl/dd[@class='subtitle']");
-            Match m = r.Match(chapterNode.Last().OuterHtml);
+                HtmlNodeCollection chapterNode = doc.DocumentNode.SelectNodes("//div[@class='index_box']/dl/dd[@class='subtitle']");
+                Match m = r.Match(chapterNode.Last().OuterHtml);
 
-            return Convert.ToInt32(m.Groups["num"].Value);
+                return Convert.ToInt32(m.Groups["num"].Value);
+            }
+            else // kakuyomu
+            {
+                HtmlNodeCollection chapterNode = doc.DocumentNode.SelectNodes("//div[@class='widget-toc-main']/ol/li[@class='widget-toc-episode']");
+                return chapterNode.Count;
+            }
         }
 
-        private static HtmlDocument GetPage(string link, CookieContainer cookies)
+        private static HtmlDocument GetPage(string link, Constants details)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(link);
             request.Method = "GET";
-            request.CookieContainer = cookies;
-            request.UserAgent = Constants.UserAgent;
-
+            request.CookieContainer = details.SyousetsuCookie;
+            request.UserAgent = details.UserAgent;
 
             try
             {
@@ -251,31 +286,61 @@ namespace Syousetsu
             }
         }
 
-        public static string GetNovelHeader(HtmlDocument doc, Constants.FileType fileType)
+        public static string GetNovelHeader(HtmlDocument doc, Constants details)
         {
-            HtmlNode headerNode = doc.DocumentNode.SelectSingleNode("//div[@id='novel_p']");
-            if (headerNode == null) { return String.Empty; }
+            HtmlNode titleNode;
+            HtmlNode headerNode;
 
-            if (fileType == Constants.FileType.Text)
+            if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
             {
-                string s = headerNode.InnerText.Trim(Environment.NewLine.ToCharArray());
-                s += Environment.NewLine + Environment.NewLine + "=====" + Environment.NewLine + Environment.NewLine;
-                return s;
+                titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='chapter_title']");
+                headerNode = doc.DocumentNode.SelectSingleNode("//div[@id='novel_p']");
             }
-            else if (fileType == Constants.FileType.HTML)
-            {
-                string[] s = headerNode.InnerText.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
+            else // kakuyomu
+            { 
+                titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='chapterTitle']/span");
+                headerNode = null;
+            }
 
-                StringBuilder sb = new StringBuilder();
-                foreach (String str in s)
+            // construct text
+            if (details.CurrentFileType == Constants.FileType.Text)
+            {
+                string s = "";
+                if (titleNode != null)
                 {
-                    string temp = (str != "") ? ("<p>" + str + "</p>") : ("<p><br/></p>");
-                    sb.AppendLine(temp);
+                    s = titleNode.InnerText.Trim() + Environment.NewLine + Environment.NewLine;
                 }
 
-                sb.AppendLine("<hr/>");
+                if (headerNode != null)
+                {
+                    s += headerNode.InnerText.Trim(Environment.NewLine.ToCharArray());
+                    s += Environment.NewLine + Environment.NewLine + "=====" + Environment.NewLine + Environment.NewLine;
+                }
+                return s;
+            }
+            else if (details.CurrentFileType == Constants.FileType.HTML)
+            {
+                string ss = "";
+                if (titleNode != null)
+                {
+                    ss = (titleNode.InnerText.Trim() != "") ? ("<p>" + titleNode.InnerText.Trim() + "<br/></p>") : ("<p><br/><br/></p>");
+                }
 
-                return sb.ToString();
+                if (headerNode != null)
+                {
+                    string[] s = headerNode.InnerText.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
+
+                    StringBuilder sb = new StringBuilder();
+                    foreach (String str in s)
+                    {
+                        string temp = (str != "") ? ("<p>" + str + "</p>") : ("<p><br/></p>");
+                        sb.AppendLine(temp);
+                    }
+                    sb.AppendLine("<hr/>");
+
+                    ss += sb.ToString();
+                }
+                return ss;
             }
             else
             {
@@ -283,14 +348,19 @@ namespace Syousetsu
             }
         }
 
-        public static bool IsValid(HtmlDocument doc)
+        public static bool IsValid(HtmlDocument doc, Constants details)
         {
-            return (GetTitle(doc) != "エラー") ? true : false;
+            HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//title");
+            if (titleNode.InnerText.Contains("エラー") || // syousetsu
+                titleNode.InnerText.Contains("お探しのページは")) // kakuyomu
+                return false;
+            else
+                return true;
         }
 
         public static bool IsValidLink(string link)
         {
-            string pattern = @"[^.]+[\.|]*syosetu.com/[\s\S]";
+            string pattern = @"[^.]+[\.|]*(syosetu.com|kakuyomu.jp)/[\s\S]";
             Regex r = new Regex(pattern);
             Match m = r.Match(link);
 
@@ -299,69 +369,95 @@ namespace Syousetsu
 
         public static string GetSeriesCode(string link)
         {
-            string pattern = @"[^.]+[\.|]*syosetu.com/(?<seriesCode>.+)(?=/)";
+            string pattern;
+            if (Constants.Site(link) == Constants.SiteType.Syousetsu) // syousetsu
+                pattern = @"[^.]+[\.|]*syosetu.com/(?<seriesCode>.+)(?=/)";
+            else // kakuyomu
+                pattern = @"[^.]+[\.|]*kakuyomu.jp/works/(?<seriesCode>.+)";
             Regex r = new Regex(pattern);
             Match m = r.Match(link);
 
             return m.Groups["seriesCode"].Value;
         }
 
-        public static void GetAllChapterTitles(Syousetsu.Constants details, HtmlDocument doc)
+        public static void GetAllChapterTitles(Constants details, HtmlDocument doc)
         {
-            //edit all href
-            HtmlNodeCollection chapterNode = doc.DocumentNode.SelectNodes("//div[@class='index_box']/dl[@class='novel_sublist2']");
-            foreach (HtmlNode node in chapterNode)
+            if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
             {
-                //get current chapter number
-                string pattern = "(href=\"/)(?<series>.+)/(?<num>.+)/\">(?<title>.+)(?=</a>)";
-                Regex r = new Regex(pattern);
-                Match m = r.Match(node.ChildNodes["dd"].OuterHtml);
-                int current = Convert.ToInt32(m.Groups["num"].Value);
-                details.ChapterTitle.Add(m.Groups["title"].Value.TrimStart().TrimEnd());
-
+                HtmlNodeCollection chapterNode = doc.DocumentNode.SelectNodes("//div[@class='index_box']/dl[@class='novel_sublist2']");
+                foreach (HtmlNode node in chapterNode)
+                {
+                    string pattern = "(href=\"/)(?<series>.+)/(?<num>.+)/\">(?<title>.+)(?=</a>)";
+                    Regex r = new Regex(pattern);
+                    Match m = r.Match(node.ChildNodes["dd"].OuterHtml);
+                    details.AddChapter(m.Groups["title"].Value.TrimStart().TrimEnd(),
+                        m.Groups["num"].Value.TrimStart().TrimEnd());
+                }
+            }
+            else // kakuyomu
+            {
+                HtmlNodeCollection chapterNode = doc.DocumentNode.SelectNodes("//div[@class='widget-toc-main']/ol/li[@class='widget-toc-episode']");
+                foreach (HtmlNode node in chapterNode)
+                {
+                    string pattern = "(href=\"/works/)(?<series>.+)/episodes/(?<num>.+)\" class";
+                    Regex r = new Regex(pattern);
+                    Match m = r.Match(node.ChildNodes["a"].OuterHtml);
+                    details.AddChapter(node.ChildNodes["a"].ChildNodes["span"].InnerText.TrimStart().TrimEnd(),
+                        m.Groups["num"].Value.TrimStart().TrimEnd());
+                }
             }
         }
     }
 
     public class Create
     {
-        public static string[] GenerateContents(Syousetsu.Constants details, HtmlDocument doc, int current)
+        public static string[] GenerateContents(Constants details, HtmlDocument doc, int current)
         {
             string[] chapter = new string[2];
             if (details.CurrentFileType == Constants.FileType.Text)
             {
-                chapter[0] = Methods.GetChapterTitle(doc).TrimStart().TrimEnd();
-                chapter[1] = Methods.GetNovelHeader(doc, details.CurrentFileType);
+                //chapter[0] = Methods.GetChapterTitle(doc, details);
+                chapter[0] = details.GetChapterByIndex(current).title;
+                chapter[1] = Methods.GetNovelHeader(doc, details);
                 chapter[1] += chapter[0];
-                chapter[1] += Methods.GetNovelBody(doc, details.CurrentFileType);
+                chapter[1] += Methods.GetNovelBody(doc, details);
 
-                if (doc.DocumentNode.SelectSingleNode("//div[@id='novel_honbun']").InnerHtml.Contains("<img"))
+                if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
                 {
-                    string subLink = String.Format("{0}{1}", details.Link, current);
-                    chapter[1] += String.Format("\n\n===\n\nContains image(s): {0}\n\n===", subLink);
+                    if (doc.DocumentNode.SelectSingleNode("//div[@id='novel_honbun']").InnerHtml.Contains("<img"))
+                    {
+                        string subLink = String.Format("{0}{1}", details.Link, current);
+                        chapter[1] += String.Format("\n\n===\n\nContains image(s): {0}\n\n===", subLink);
+                    }
                 }
             }
             else if (details.CurrentFileType == Constants.FileType.HTML)
             {
-                chapter[0] = Methods.GetChapterTitle(doc).TrimStart().TrimEnd();
+                //chapter[0] = Methods.GetChapterTitle(doc, details);
+                chapter[0] = details.GetChapterByIndex(current).title;
                 chapter[1] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
                 chapter[1] += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n";
                 chapter[1] += "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n\n";
                 chapter[1] += "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n";
                 chapter[1] += "<head>\n";
-                chapter[1] += $"\t<title>{Methods.GetChapterTitle(doc).TrimStart().TrimEnd()}" +
+                //chapter[1] += $"\t<title>{Methods.GetChapterTitle(doc, details)}" +
+                //    $" ({current}) {details.SeriesTitle}</title>\n";
+                chapter[1] += $"\t<title>{details.GetChapterByIndex(current).title}" +
                     $" ({current}) {details.SeriesTitle}</title>\n";
                 chapter[1] += "\t<link href=\"ChapterStyle.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
                 chapter[1] += "</head>\n";
                 chapter[1] += "<body>\n ";
-                chapter[1] += Methods.GetNovelHeader(doc, details.CurrentFileType);
+                chapter[1] += Methods.GetNovelHeader(doc, details);
                 chapter[1] += "\n<h2>" + chapter[0] + "</h2>\n\n";
-                chapter[1] += Methods.GetNovelBody(doc, details.CurrentFileType);
+                chapter[1] += Methods.GetNovelBody(doc, details);
 
-                if (doc.DocumentNode.SelectSingleNode("//div[@id='novel_honbun']").InnerHtml.Contains("<img"))
+                if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
                 {
-                    string subLink = String.Format("{0}{1}", details.Link, current);
-                    chapter[1] += String.Format("\n\n===\n\n<a href=\"{0}\">Contains image(s)</a>\n\n===", subLink);
+                    if (doc.DocumentNode.SelectSingleNode("//div[@id='novel_honbun']").InnerHtml.Contains("<img"))
+                    {
+                        string subLink = String.Format("{0}{1}", details.Link, current);
+                        chapter[1] += String.Format("\n\n===\n\n<a href=\"{0}\">Contains image(s)</a>\n\n===", subLink);
+                    }
                 }
             }
             return chapter;
@@ -402,19 +498,40 @@ namespace Syousetsu
             //create novel folder if it doesn't exist
             CheckDirectory(details);
 
-            HtmlNode ptitleNode = doc.DocumentNode.SelectSingleNode("//title");
-            HtmlNode stitleNode = doc.DocumentNode.SelectSingleNode("//p[@class='series_title']");
-            HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='novel_title']");
-            HtmlNode writerNode = doc.DocumentNode.SelectSingleNode("//div[@class='novel_writername']");
+            HtmlNode ptitleNode; // page title
+            HtmlNode stitleNode; // series title
+            HtmlNode titleNode;  // novel title
+            HtmlNode writerNode; // author
+            HtmlNode tocNode;    // table of contents
 
-            HtmlNode tocNode = doc.DocumentNode.SelectSingleNode("//div[@class='index_box']");
+            if (details.Site() == Constants.SiteType.Syousetsu)
+            {
+                ptitleNode = doc.DocumentNode.SelectSingleNode("//title");
+                stitleNode = doc.DocumentNode.SelectSingleNode("//p[@class='series_title']");
+                titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='novel_title']");
+                writerNode = doc.DocumentNode.SelectSingleNode("//div[@class='novel_writername']");
+                tocNode = doc.DocumentNode.SelectSingleNode("//div[@class='index_box']");
+            }
+            else // kakuyomu
+            {
+                ptitleNode = doc.DocumentNode.SelectSingleNode("//title");
+                stitleNode = null;
+                titleNode = doc.DocumentNode.SelectSingleNode("//h1[@id='workTitle']");
+                writerNode = doc.DocumentNode.SelectSingleNode("//h2[@id='workAuthor']");
+                tocNode = doc.DocumentNode.SelectSingleNode("//section[@class='widget-toc']");
+
+                // remove left header
+                tocNode.ChildNodes["header"].Remove();
+            }
+
             HtmlNodeCollection cssNodeList = doc.DocumentNode.SelectNodes("//link[@rel='stylesheet']");
 
             var cssNode = (from n in cssNodeList
                            where n.Attributes["href"].Value.Contains("ncout.css") ||
                            n.Attributes["href"].Value.Contains("ncout2.css") ||
-                           n.Attributes["href"].Value.Contains("kotei.css") ||
-                           n.Attributes["href"].Value.Contains("reset.css")
+                           n.Attributes["href"].Value.Contains("kotei.css") || // ...
+                           n.Attributes["href"].Value.Contains("reset.css") || // syousetsu
+                           n.Attributes["href"].Value.Contains("kakuyomu.css") // kakuyomu
                            select n).ToList();
 
             //get css link and download
@@ -424,7 +541,11 @@ namespace Syousetsu
             Match m;
             foreach (HtmlNode node in cssNode)
             {
-                pattern = "(href=\")(?<link>.+)(?=\" media)";
+                if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
+                    pattern = "(href=\")(?<link>.+)(?=\" media)";
+                else // kakuyomu
+                    pattern = "(href=\")(?<link>.+)(?=\">)";
+
                 r = new Regex(pattern);
                 m = r.Match(node.OuterHtml);
                 cssink.Add(m.Groups["link"].Value);
@@ -439,9 +560,17 @@ namespace Syousetsu
             if (ptitleNode != null) sb.AppendLine(ptitleNode.OuterHtml);
             sb.AppendLine("</head>");
 
-            sb.AppendLine("<body>");
+            if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
+                sb.AppendLine("<body>");
+            else // kakuyomu
+            {
+                // copy <body> as is for it's id
+                HtmlNode body = doc.DocumentNode.SelectSingleNode("//body");
+                sb.AppendLine(body.OuterHtml.Substring(0, body.OuterHtml.IndexOf('>') + 1));
+            }
 
-            if (stitleNode != null)
+            // restore header links
+            if (stitleNode != null) // syousetsu
             {
                 if (null != stitleNode.ChildNodes["a"] &&
                     null != stitleNode.ChildNodes["a"].Attributes["href"])
@@ -454,31 +583,69 @@ namespace Syousetsu
                 }
                 sb.AppendLine(stitleNode.OuterHtml);
             }
+            else // kakuyomu
+            {
+                HtmlNode title_node = doc.DocumentNode.SelectSingleNode("//h1[@id='workTitle']/a");
+                HtmlNode author_node = doc.DocumentNode.SelectSingleNode("//h2[@id='workAuthor']/span[@id='workAuthor-activityName']/a");
+                if (title_node != null)
+                {
+                    string s = null; s = title_node.Attributes["href"]?.Value;
+                    if (!string.IsNullOrEmpty(s))
+                        title_node.Attributes["href"].Value = "https://kakuyomu.jp" + s;
+                }
+                if (author_node != null)
+                {
+                    string s = null; s = author_node.Attributes["href"]?.Value;
+                    if (!string.IsNullOrEmpty(s))
+                        author_node.Attributes["href"].Value = "https://kakuyomu.jp" + s;
+                }
+            }
+
             if (titleNode != null) sb.AppendLine(titleNode.OuterHtml);
             if (writerNode != null) sb.AppendLine(writerNode.OuterHtml);
 
             //edit all href
             int i = 1;
-            HtmlNodeCollection chapterNode = doc.DocumentNode.SelectNodes("//div[@class='index_box']/dl[@class='novel_sublist2']");
+            HtmlNodeCollection chapterNode;
+            if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
+                chapterNode = doc.DocumentNode.SelectNodes("//div[@class='index_box']/dl[@class='novel_sublist2']");
+            else // kakuyomu
+                chapterNode = doc.DocumentNode.SelectNodes("//section[@class='widget-toc']/div[@class='widget-toc-main']/ol/li[@class='widget-toc-episode']");
+
             foreach (HtmlNode node in chapterNode)
             {
                 //get current chapter number
-                pattern = "(href=\"/)(?<series>.+)/(?<num>.+)/\">(?<title>.+)(?=</a>)";
-                r = new Regex(pattern);
-                m = r.Match(node.ChildNodes["dd"].OuterHtml);
-                int current = Convert.ToInt32(m.Groups["num"].Value);
-                //already filled
-                //details.ChapterTitle.Add(m.Groups["title"].Value);
+                if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
+                {
+                    pattern = "(href=\"/)(?<series>.+)/(?<num>.+)/\">(?<title>.+)(?=</a>)";
+                    r = new Regex(pattern);
+                    m = r.Match(node.ChildNodes["dd"].OuterHtml);
+                    //int current = Convert.ToInt32(m.Groups["num"].Value);
 
-                //edit href
-                string fileName = details.FilenameFormat;
-                fileName = String.Format(fileName + ".htm", current, details.ChapterTitle[current], details.SeriesCode);
-                node.ChildNodes["dd"].ChildNodes["a"].Attributes["href"].Value = "./" + fileName;
-                node.ChildNodes["dd"].ChildNodes["a"].InnerHtml = "(" + i + ") " + node.ChildNodes["dd"].ChildNodes["a"].InnerHtml;
+                    //edit href
+                    string fileName = details.FilenameFormat;
+                    fileName = String.Format(fileName + ".htm", i, details.GetChapterByIndex(i).title, details.SeriesCode);
+                    node.ChildNodes["dd"].ChildNodes["a"].Attributes["href"].Value = "./" + fileName;
+                    node.ChildNodes["dd"].ChildNodes["a"].InnerHtml = "(" + i + ") " +
+                        node.ChildNodes["dd"].ChildNodes["a"].InnerHtml;
+                }
+                else // kakuyomu
+                {
+                    pattern = "(href=\"/works/)(?<series>.+)/episodes/(?<num>.+)\" class.+item\">(?<title>.+)(?=</span>)";
+                    r = new Regex(pattern);
+                    m = r.Match(node.OuterHtml);
+
+                    //edit href
+                    string fileName = details.FilenameFormat;
+                    fileName = String.Format(fileName + ".htm", i, details.GetChapterByIndex(i).title, details.SeriesCode);
+                    node.ChildNodes["a"].Attributes["href"].Value = "./" + fileName;
+                    node.ChildNodes["a"].ChildNodes["span"].InnerHtml = "(" + i + ") " +
+                        node.ChildNodes["a"].ChildNodes["span"].InnerHtml;
+                }
 
                 if (i <= Convert.ToInt32(details.End))
                 {
-                    CheckDirectory(details, current);
+                    CheckDirectory(details, i);
                 }
                 i++;
             }
@@ -490,7 +657,7 @@ namespace Syousetsu
             File.WriteAllText(Path.Combine(details.Path, details.SeriesTitle, details.SeriesCode + ".htm"), sb.ToString());
         }
 
-        private static void DownloadCss(Syousetsu.Constants details, List<string> link)
+        private static void DownloadCss(Constants details, List<string> link)
         {
             string cssfile = Path.Combine(details.Path, details.SeriesTitle, details.SeriesCode + ".css");
             File.WriteAllText(cssfile, "");
@@ -499,7 +666,7 @@ namespace Syousetsu
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(f);
                 request.Method = "GET";
-                request.UserAgent = Constants.UserAgent;
+                request.UserAgent = details.UserAgent;
 
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 var stream = response.GetResponseStream();
@@ -514,14 +681,25 @@ namespace Syousetsu
                     }
                 }
             }
+
+            // css fix
+            using (StreamWriter writer = File.AppendText(cssfile))
+            {
+                if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
+                    writer.Write("\n.index_box{width:100%!important;}");
+                else // kakuyomu
+                    writer.Write("\n.widget-toc-main{width:100%!important;float:none!important;}");
+                writer.Close();
+            }
         }
 
-        private static string CheckDirectory(Syousetsu.Constants details)
+        private static string CheckDirectory(Constants details)
         {
             string path;
             if (!details.FilenameFormat.Contains('/') && !details.FilenameFormat.Contains('\\'))
             {
-                path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), details.SeriesTitle);
+                path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
+                    details.SeriesTitle);
             }
             else
             {
@@ -534,7 +712,7 @@ namespace Syousetsu
                 path = Path.Combine(new string[] {
                     Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
                     details.SeriesTitle,
-                    String.Format(tempFormat, new object[]{ 0, details.ChapterTitle[0], details.SeriesCode})
+                    String.Format(tempFormat, new object[]{ 0, details.GetChapterByIndex(0).title, details.SeriesCode})
                 });
             }
             if (!Directory.Exists(path)) { Directory.CreateDirectory(path); }
@@ -546,7 +724,8 @@ namespace Syousetsu
             string path;
             if (!details.FilenameFormat.Contains('/') && !details.FilenameFormat.Contains('\\'))
             {
-                path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), details.SeriesTitle);
+                path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
+                    details.SeriesTitle);
             }
             else
             {
@@ -559,7 +738,8 @@ namespace Syousetsu
                 path = Path.Combine(new string[] {
                     Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
                     details.SeriesTitle,
-                    String.Format(tempFormat, new object[]{ current, details.ChapterTitle[current], details.SeriesCode})
+                    String.Format(tempFormat, new object[]{ current, details.GetChapterByIndex(current).title,
+                        details.SeriesCode})
                 });
             }
             if (!Directory.Exists(path)) { Directory.CreateDirectory(path); }

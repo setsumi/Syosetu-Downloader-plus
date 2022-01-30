@@ -65,7 +65,7 @@ namespace syosetuDownloaderCLI
                 Syousetsu.Constants sc = new Syousetsu.Constants();
                 HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(o.Link, sc.SyousetsuCookie);
 
-                sc.ChapterTitle.Add("");
+                sc.Chapters.Add("");
                 sc.SeriesTitle = Syousetsu.Methods.GetTitle(toc);
                 sc.Link = o.Link;
                 sc.Start = o.Start;

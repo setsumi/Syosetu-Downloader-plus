@@ -35,7 +35,7 @@ namespace syosetuDownloader
 
         Shell32.Shell _shell;
         string _exe_dir;
-        readonly string _version = "2.4.0 plus 5";
+        readonly string _version = "2.4.0 plus 6";
 
         public class NovelDrop
         {
@@ -87,7 +87,7 @@ namespace syosetuDownloader
             string[] fileEntries = Directory.GetFiles(_exe_dir);
             foreach (string file in fileEntries)
             {
-                if (System.IO.Path.GetExtension(file).Equals(".url", StringComparison.InvariantCultureIgnoreCase))
+                if (System.IO.Path.GetExtension(file).Equals(".url", StringComparison.OrdinalIgnoreCase))
                 {
                     //Get the shortcut's file.
                     Shell32.FolderItem folder_item =
@@ -163,18 +163,20 @@ namespace syosetuDownloader
             }
 
             if (!_link.StartsWith("http")) { _link = @"http://" + _link; }
-            if (!_link.EndsWith("/")) { _link += "/"; }
+
+            if (Syousetsu.Constants.Site(_link) == Syousetsu.Constants.SiteType.Syousetsu) // syousetsu
+                if (!_link.EndsWith("/")) { _link += "/"; }
 
             if (!Syousetsu.Methods.IsValidLink(_link))
             {
                 MessageBox.Show("Link not valid!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
-            Syousetsu.Constants sc = new Syousetsu.Constants();
-            sc.ChapterTitle.Add("");
-            HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(_link, sc.SyousetsuCookie);
+            Syousetsu.Constants sc = new Syousetsu.Constants(_link, _exe_dir);
+            sc.AddChapter("", ""); // start chapters from 1
+            HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(_link, sc);
 
-            if (!Syousetsu.Methods.IsValid(toc))
+            if (!Syousetsu.Methods.IsValid(toc, sc))
             {
                 MessageBox.Show("Link not valid!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -184,11 +186,11 @@ namespace syosetuDownloader
             _row += 1;
 
             Label lb = new Label();
-            lb.Content = Syousetsu.Methods.GetTitle(toc);
+            lb.Content = Syousetsu.Methods.GetTitle(toc, sc);
             lb.ToolTip = "Click to open folder";
 
             ProgressBar pb = new ProgressBar();
-            pb.Maximum = (_end == String.Empty) ? Syousetsu.Methods.GetTotalChapters(toc) : Convert.ToDouble(_end);
+            pb.Maximum = (_end == String.Empty) ? Syousetsu.Methods.GetTotalChapters(toc, sc) : Convert.ToDouble(_end);
             pb.ToolTip = "Click to stop download";
             pb.Height = 10;
             pb.Tag = 0;
