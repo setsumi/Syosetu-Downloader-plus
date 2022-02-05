@@ -1,0 +1,130 @@
+﻿<Window x:Class="syosetuDownloader.HistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:syosetuDownloader"
+        xmlns:util="clr-namespace:Util"
+        mc:Ignorable="d"
+        Title="History" Height="600" Width="800" Closing="Window_Closing" Loaded="Window_Loaded">
+    <Window.Resources>
+        <Style x:Key="DefaultChaptersClassStyle" TargetType="{x:Type ListBoxItem}">
+        </Style>
+        <Style x:Key="NewChaptersClassStyle" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="Foreground" Value="Green"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style x:Key="InvalidChaptersClassStyle" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="Foreground" Value="Red"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <!--<local:CategoryHighlightStyleSelector x:Key="myStyleSelector"/>-->
+    </Window.Resources>
+    <Window.CommandBindings>
+        <CommandBinding Command="local:CustomCommands.Favorite" Executed="FavoriteCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.Update" Executed="UpdateCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.Remove" Executed="RemoveCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.Select" Executed="SelectCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.Web" Executed="WebCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.Close" Executed="CloseCommand_Executed"/>
+    </Window.CommandBindings>
+    <Grid>
+        <Button Content="Favorite" HorizontalAlignment="Center" Margin="-220,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Favorite" ToolTip="(F2)"/>
+        <Button Content="Update" HorizontalAlignment="Center" Margin="-110,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Update" ToolTip="Check for Updates (F5)"/>
+        <Button Content="Remove" HorizontalAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Remove" ToolTip="(F8)"/>
+        <Button Content="Select" HorizontalAlignment="Center" Margin="110,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Select" ToolTip="Choose to Download (Enter)"/>
+        <Button Content="Web" HorizontalAlignment="Center" Margin="220,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Web" ToolTip="Open Web Site (Ctrl+Enter)"/>
+        <ListView x:Name="viewHistoryList" FontSize="13"
+          Background="Transparent" PreviewMouseLeftButtonUp="OnPreviewMouseLeftButtonUp"
+          IsSynchronizedWithCurrentItem="True"
+          util:GridViewSort.AutoSort="True"
+          util:GridViewSort.SortGlyphAscending="up.png"
+          util:GridViewSort.SortGlyphDescending="down.png" Margin="0,27,0,0" SelectionMode="Single">
+            <!--ItemContainerStyleSelector="{DynamicResource myStyleSelector}"-->
+            <!--<ListView.ItemContainerStyle>
+                <Style TargetType="{x:Type ListViewItem}">
+                    <Setter Property="ToolTip">
+                        <Setter.Value>
+                            <UniformGrid Columns="1">
+                                <TextBlock Text="{Binding Title}"/>
+                                <TextBlock Text="{Binding Link}"/>
+                            </UniformGrid>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListView.ItemContainerStyle>-->
+            <ListView.ItemContainerStyleSelector>
+                <local:CategoryHighlightStyleSelector
+                    DefaultChaptersClassStyle="{StaticResource DefaultChaptersClassStyle}"
+                    NewChaptersClassStyle="{StaticResource NewChaptersClassStyle}"
+                    InvalidChaptersClassStyle="{StaticResource InvalidChaptersClassStyle}"/>
+            </ListView.ItemContainerStyleSelector>
+            <ListView.Resources>
+                <local:FavoriteBooleanConverter x:Key="FavoriteBooleanConverter"/>
+                <!--<Style TargetType="{x:Type GridViewColumnHeader}">
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                </Style>-->
+                <!--<Style TargetType="{x:Type ListViewItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Favorite}" Value="True">
+                            <Setter Property="FontWeight" Value="Bold"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Favorite}" Value="False">
+                            <Setter Property="FontWeight" Value="Regular"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>-->
+            </ListView.Resources>
+            <ListView.View>
+                <GridView x:Name="viewHistoryGrid">
+                    <GridView.Columns>
+                        <!-- dummy column because restore sort util is crashing on first column -->
+                        <GridViewColumn Header="" Width="0">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text=""/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Favorite" util:GridViewSort.PropertyName="Favorite">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Favorite, Converter={StaticResource FavoriteBooleanConverter}, Mode=Default}"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Title" util:GridViewSort.PropertyName="Title" Width="420">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis">
+                                        <TextBlock.ToolTip>
+                                            <UniformGrid Columns="1">
+                                                <TextBlock Text="{Binding Title}"/>
+                                                <TextBlock Text="{Binding Link}"/>
+                                            </UniformGrid>
+                                        </TextBlock.ToolTip>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Downloaded"
+                                DisplayMemberBinding="{Binding Downloaded}"
+                                util:GridViewSort.PropertyName="Downloaded"/>
+                        <GridViewColumn Header="Total"
+                                DisplayMemberBinding="{Binding Total}"
+                                util:GridViewSort.PropertyName="Total"/>
+                        <GridViewColumn Header="Last DL"
+                                DisplayMemberBinding="{Binding Date}"
+                                util:GridViewSort.PropertyName="Date"/>
+                        <GridViewColumn Header="Link"
+                                DisplayMemberBinding="{Binding Link}"
+                                util:GridViewSort.PropertyName="Link"/>
+                        <!--<GridViewColumn Header="Site"
+                                DisplayMemberBinding="{Binding Site}"
+                                util:GridViewSort.PropertyName="Site"/>-->
+                    </GridView.Columns>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</Window>

@@ -54,6 +54,9 @@ namespace Syousetsu
 
                     string[] chapter = Create.GenerateContents(details, GetPage(subLink, details), ctr);
                     Create.SaveFile(details, chapter, ctr);
+                    // update downloaded history
+                    details.LastDownloaded = ctr;
+                    History.SaveNovel(details);
 
                     pb.Dispatcher.Invoke((Action)(() => { pb.Value = ctr; }));
                     if (upTo != -1 && ctr > upTo)//stop loop if the specifed range is reached
@@ -227,7 +230,7 @@ namespace Syousetsu
             return String.Empty;
         }
 
-        public static int GetTotalChapters(HtmlDocument doc, Syousetsu.Constants details)
+        public static int GetTotalChapters(HtmlDocument doc, Constants details)
         {
             if (details.Site() == Constants.SiteType.Syousetsu) // syosetu
             {

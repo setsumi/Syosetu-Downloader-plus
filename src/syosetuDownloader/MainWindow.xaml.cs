@@ -17,6 +17,8 @@ using System.IO;
 using System.Diagnostics;
 using System.Media;
 using System.Windows.Threading;
+using System.Xml.Linq;
+using System.Xml;
 
 namespace syosetuDownloader
 {
@@ -35,7 +37,9 @@ namespace syosetuDownloader
 
         Shell32.Shell _shell;
         string _exe_dir;
-        readonly string _version = "2.4.0 plus 6";
+        readonly string _version = "2.4.0 plus 7";
+        
+        public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
         public class NovelDrop
         {
@@ -267,17 +271,34 @@ namespace syosetuDownloader
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Focus editable combobox
-            var textBox = (txtLink.Template.FindName("PART_EditableTextBox", txtLink) as TextBox);
-            if (textBox != null)
-            {
-                textBox.Focus();
-                textBox.SelectionStart = textBox.Text.Length;
-            }
+            //var textBox = (txtLink.Template.FindName("PART_EditableTextBox", txtLink) as TextBox);
+            //if (textBox != null)
+            //{
+            //    textBox.Focus();
+            //    textBox.SelectionStart = textBox.Text.Length;
+            //}
+
+            LoadConfig();
+
+            // focus history button
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => btnHistory.Focus()));
+
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            SaveConfig();
         }
 
         private void btnExplore_Click(object sender, RoutedEventArgs e)
         {
             _shell.Explore(_exe_dir);
+        }
+
+        private void btnHistory_Click(object sender, RoutedEventArgs e)
+        {
+            HistoryWindow win = new HistoryWindow();
+            win.ShowDialog();
         }
 
         private void txtLink_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -306,6 +327,47 @@ namespace syosetuDownloader
                     _shell.Open(((SiteLink)combobox.SelectedItem).Link);
                 }
             }
+        }
+
+        public void LoadConfig()
+        {
+            string file = _exe_dir + System.IO.Path.DirectorySeparatorChar + "config.xml";
+            if (!File.Exists(file)) return;
+
+            XElement level1Element = XElement.Load(file).Element("historySort");
+            Enum.TryParse(level1Element.Attribute("direction").Value, out System.ComponentModel.ListSortDirection dir);
+            sortInfo.Direction = dir;
+            sortInfo.PropertyName = level1Element.Attribute("propertyName").Value;
+            sortInfo.ColumnName = level1Element.Attribute("columnName").Value;
+        }
+
+        public void SaveConfig()
+        {
+            string file = _exe_dir + System.IO.Path.DirectorySeparatorChar + "config.xml";
+
+            XmlDocument doc = new XmlDocument();
+            XmlNode docNode = doc.CreateXmlDeclaration("1.0", "UTF-8", null);
+            doc.AppendChild(docNode);
+
+            XmlNode rootNode = doc.CreateElement("root");
+            doc.AppendChild(rootNode);
+
+            XmlNode node = doc.CreateElement("historySort");
+
+            XmlAttribute attr = doc.CreateAttribute("direction");
+            attr.Value = sortInfo.Direction.ToString();
+            node.Attributes.Append(attr);
+
+            attr = doc.CreateAttribute("propertyName");
+            attr.Value = sortInfo.PropertyName;
+            node.Attributes.Append(attr);
+
+            attr = doc.CreateAttribute("columnName");
+            attr.Value = sortInfo.ColumnName;
+            node.Attributes.Append(attr);
+
+            rootNode.AppendChild(node);
+            doc.Save(file);
         }
 
     }

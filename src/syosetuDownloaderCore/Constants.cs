@@ -50,6 +50,7 @@ namespace Syousetsu
         List<Chapter> _chapters = new List<Chapter>();
         const string userAgent = "Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/70.0";
         List<string> _userAgentList = new List<string>();
+        int _lastDownloaded = 0;
 
         // Constructor
         public Constants(string link, string exedir)
@@ -57,21 +58,27 @@ namespace Syousetsu
             _link = link;
 
             // load user agents from file
-            try
+            if (!string.IsNullOrEmpty(exedir))
             {
-                string input = File.ReadAllText(exedir + "\\useragent.ini");
-                StringReader reader = new StringReader(input);
-                string line = null;
-                do
+                try
                 {
-                    line = reader.ReadLine();
-                    if (line != null) // do something with the line
+                    string input = File.ReadAllText(exedir + "\\useragent.ini");
+                    StringReader reader = new StringReader(input);
+                    string line = null;
+                    do
                     {
-                        _userAgentList.Add(line);
-                    }
-                } while (line != null);
+                        line = reader.ReadLine();
+                        if (line != null) // do something with the line
+                        {
+                            _userAgentList.Add(line);
+                        }
+                    } while (line != null);
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
-            catch { };
         }
 
         public static SiteType Site(string link)
@@ -170,6 +177,17 @@ namespace Syousetsu
         {
             get { return _fileNameFormat; }
             set { _fileNameFormat = value; }
+        }
+
+        public int TotalChapters
+        {
+            get { return _chapters.Count - 1; }
+        }
+
+        public int LastDownloaded
+        {
+            get { return _lastDownloaded; }
+            set { _lastDownloaded = value; }
         }
 
         //public List<Chapter> Chapters
