@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "syosetuDownloader", "syoset
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "syosetuDownloaderCore", "syosetuDownloaderCore\syosetuDownloaderCore.csproj", "{EF69F9D8-07B1-4F10-966F-CF469E0D9BF8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "syosetuDownloaderCLI", "syosetuDownloaderCLI\syosetuDownloaderCLI.csproj", "{10C85DDC-3B6F-45CE-BCC5-10137F1D4D5D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,12 +31,6 @@ Global
 		{EF69F9D8-07B1-4F10-966F-CF469E0D9BF8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EF69F9D8-07B1-4F10-966F-CF469E0D9BF8}.Release|x86.ActiveCfg = Release|Any CPU
 		{EF69F9D8-07B1-4F10-966F-CF469E0D9BF8}.Release|x86.Build.0 = Release|Any CPU
-		{10C85DDC-3B6F-45CE-BCC5-10137F1D4D5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10C85DDC-3B6F-45CE-BCC5-10137F1D4D5D}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{10C85DDC-3B6F-45CE-BCC5-10137F1D4D5D}.Debug|x86.Build.0 = Debug|Any CPU
-		{10C85DDC-3B6F-45CE-BCC5-10137F1D4D5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10C85DDC-3B6F-45CE-BCC5-10137F1D4D5D}.Release|x86.ActiveCfg = Release|Any CPU
-		{10C85DDC-3B6F-45CE-BCC5-10137F1D4D5D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

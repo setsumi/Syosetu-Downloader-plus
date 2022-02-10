@@ -245,7 +245,7 @@ namespace syosetuDownloader
             if (value is bool)
             {
                 if ((bool)value == true)
-                    return "🖤";
+                    return "⚫";
                 else
                     return " ";
             }
@@ -257,7 +257,7 @@ namespace syosetuDownloader
         {
             switch (value.ToString())
             {
-                case "🖤":
+                case "⚫":
                     return true;
                 case " ":
                     return false;

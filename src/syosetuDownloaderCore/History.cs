@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Microsoft.VisualBasic.FileIO;
 
 namespace Syousetsu
 {
@@ -73,7 +74,7 @@ namespace Syousetsu
             string file = _folder + item.Code + ".xml";
             if (System.IO.File.Exists(file))
             {
-                System.IO.File.Delete(file);
+                FileSystem.DeleteFile(file, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
             }
         }
 
