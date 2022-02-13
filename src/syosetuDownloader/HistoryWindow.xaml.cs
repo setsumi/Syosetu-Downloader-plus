@@ -26,6 +26,7 @@ namespace syosetuDownloader
     /// </summary>
     public partial class HistoryWindow : Window
     {
+        int _taskNumber = 0;
         MainWindow _parent;
 
         bool _updating = false;
@@ -93,35 +94,94 @@ namespace syosetuDownloader
 
         private void FavoriteCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            var item = GetCurrentItem();
-            item.Favorite = !item.Favorite;
-            Syousetsu.History.SaveItem(item);
+            foreach (Syousetsu.History.Item item in viewHistoryList.SelectedItems)
+            {
+                item.Favorite = !item.Favorite;
+                Syousetsu.History.SaveItem(item);
+            }
+            //var item = GetCurrentItem();
+            //item.Favorite = !item.Favorite;
+            //Syousetsu.History.SaveItem(item);
         }
 
-        private void UpdateCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        private void UpdateCommand_Executed(object sender, ExecutedRoutedEventArgs ea)
         {
             Updating = true;
+            UpdateStatus(0);
 
-            var item = GetCurrentItem();
-            Syousetsu.Constants sc = new Syousetsu.Constants(item.Link, null);
-            HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(item.Link, sc);
-            if (!Syousetsu.Methods.IsValid(toc, sc))
+            foreach (Syousetsu.History.Item item in viewHistoryList.SelectedItems)
             {
-                MessageBox.Show("Link not valid!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                goto updateCommand_end;
-            }
-            item.Total = Syousetsu.Methods.GetTotalChapters(toc, sc);
-            Syousetsu.History.SaveItem(item);
+                UpdateStatus(+1);
 
-        updateCommand_end:
-            Updating = false;
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        Syousetsu.Constants sc = new Syousetsu.Constants(item.Link, null);
+                        HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(item.Link, sc);
+                        if (Syousetsu.Methods.IsValid(toc, sc))
+                        {
+                            item.Total = Syousetsu.Methods.GetTotalChapters(toc, sc);
+                            Syousetsu.History.SaveItem(item);
+                        }
+                        else
+                        {
+                            throw new Exception("Link not valid!" + Environment.NewLine + item.Link);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show(e.Message, "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                        )
+                        .ContinueWith(delegate
+                        {
+                            UpdateStatus(-1);
+                        }
+                        , TaskScheduler.FromCurrentSynchronizationContext());
+            }
+
+            //    Updating = true;
+            //    var item = GetCurrentItem();
+            //    Syousetsu.Constants sc = new Syousetsu.Constants(item.Link, null);
+            //    HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(item.Link, sc);
+            //    if (!Syousetsu.Methods.IsValid(toc, sc))
+            //    {
+            //        MessageBox.Show("Link not valid!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            //        goto updateCommand_end;
+            //    }
+            //    item.Total = Syousetsu.Methods.GetTotalChapters(toc, sc);
+            //    Syousetsu.History.SaveItem(item);
+            //updateCommand_end:
+            //    Updating = false;
+        }
+
+        private void UpdateStatus(int n)
+        {
+            if (n == 0)
+            {
+                _taskNumber = 0;
+                return;
+            }
+
+            _taskNumber += n;
+            this.Title = "History - Updating..." + _taskNumber;
+            if (_taskNumber == 0)
+                Updating = false;
         }
 
         private void RemoveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            var item = GetCurrentItem();
-            (viewHistoryList.ItemsSource as ObservableCollection<Syousetsu.History.Item>).Remove(item);
-            Syousetsu.History.DeleteItemFile(item);
+            foreach (Syousetsu.History.Item item in viewHistoryList.SelectedItems.Cast<Syousetsu.History.Item>().ToList())
+            {
+                (viewHistoryList.ItemsSource as ObservableCollection<Syousetsu.History.Item>).Remove(item);
+                Syousetsu.History.DeleteItemFile(item);
+            }
+            FocusListView();
+            //var item = GetCurrentItem();
+            //(viewHistoryList.ItemsSource as ObservableCollection<Syousetsu.History.Item>).Remove(item);
+            //Syousetsu.History.DeleteItemFile(item);
         }
 
         private void SelectCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -146,7 +206,7 @@ namespace syosetuDownloader
 
         private void CloseCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            this.Close();
+            if (!_updating) this.Close();
         }
 
         private void OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)

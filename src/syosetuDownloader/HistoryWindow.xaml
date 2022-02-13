@@ -39,7 +39,8 @@
           IsSynchronizedWithCurrentItem="True"
           util:GridViewSort.AutoSort="True"
           util:GridViewSort.SortGlyphAscending="up.png"
-          util:GridViewSort.SortGlyphDescending="down.png" Margin="0,27,0,0" SelectionMode="Single">
+          util:GridViewSort.SortGlyphDescending="down.png" Margin="0,27,0,0" >
+            <!--SelectionMode="Single"-->
             <!--ItemContainerStyleSelector="{DynamicResource myStyleSelector}"-->
             <!--<ListView.ItemContainerStyle>
                 <Style TargetType="{x:Type ListViewItem}">
