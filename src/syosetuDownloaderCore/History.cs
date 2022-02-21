@@ -24,6 +24,7 @@ namespace Syousetsu
             DateTime _date = new DateTime();
             Constants.SiteType _site;
             string _code = "";
+            bool _finished = false;
 
             public string Link { get => _link; set => _link = value; }
             public bool Favorite
@@ -41,6 +42,12 @@ namespace Syousetsu
             public DateTime Date { get => _date; set => _date = value; }
             public Constants.SiteType Site { get => _site; set => _site = value; }
             public string Code { get => _code; set => _code = value; }
+            public string New { get => this.Downloaded < this.Total ? "+" : ""; }
+            public bool Finished
+            {
+                get => _finished;
+                set { _finished = value; OnPropertyChanged(nameof(Finished)); }
+            }
 
             public event PropertyChangedEventHandler PropertyChanged;
 
@@ -112,16 +119,21 @@ namespace Syousetsu
         {
             if (!System.IO.File.Exists(file)) return;
 
-            XElement level1Element = XElement.Load(file).Element("item");
-            item.Link = level1Element.Attribute("link").Value;
-            item.Favorite = bool.Parse(level1Element.Attribute("favorite").Value);
-            item.Title = level1Element.Attribute("title").Value;
-            item.Downloaded = int.Parse(level1Element.Attribute("downloaded").Value);
-            item.Total = int.Parse(level1Element.Attribute("total").Value);
-            item.Date = DateTime.Parse(level1Element.Attribute("date").Value);
-            Enum.TryParse(level1Element.Attribute("site").Value, out Constants.SiteType site);
+            XElement elem = XElement.Load(file).Element("item");
+            item.Link = elem.Attribute("link").Value;
+            item.Favorite = bool.Parse(elem.Attribute("favorite").Value);
+            item.Title = elem.Attribute("title").Value;
+            item.Downloaded = int.Parse(elem.Attribute("downloaded").Value);
+            item.Total = int.Parse(elem.Attribute("total").Value);
+            item.Date = DateTime.Parse(elem.Attribute("date").Value);
+            Enum.TryParse(elem.Attribute("site").Value, out Constants.SiteType site);
             item.Site = site;
-            item.Code = level1Element.Attribute("code").Value;
+            item.Code = elem.Attribute("code").Value;
+            try // newly added stuff
+            {
+                item.Finished = bool.Parse(elem.Attribute("finished").Value);
+            }
+            catch { }
         }
 
         public static void SaveFile(Item item, string file)
@@ -165,6 +177,10 @@ namespace Syousetsu
 
             attr = doc.CreateAttribute("code");
             attr.Value = item.Code;
+            node.Attributes.Append(attr);
+
+            attr = doc.CreateAttribute("finished");
+            attr.Value = item.Finished.ToString();
             node.Attributes.Append(attr);
 
             rootNode.AppendChild(node);

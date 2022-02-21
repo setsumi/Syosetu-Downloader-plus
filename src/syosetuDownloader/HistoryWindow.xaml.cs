@@ -115,23 +115,26 @@ namespace syosetuDownloader
 
                 Task.Run(() =>
                 {
-                    try
+                    if (!item.Finished)
                     {
-                        Syousetsu.Constants sc = new Syousetsu.Constants(item.Link, null);
-                        HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(item.Link, sc);
-                        if (Syousetsu.Methods.IsValid(toc, sc))
+                        try
                         {
-                            item.Total = Syousetsu.Methods.GetTotalChapters(toc, sc);
-                            Syousetsu.History.SaveItem(item);
+                            Syousetsu.Constants sc = new Syousetsu.Constants(item.Link, null);
+                            HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(item.Link, sc);
+                            if (Syousetsu.Methods.IsValid(toc, sc))
+                            {
+                                item.Total = Syousetsu.Methods.GetTotalChapters(toc, sc);
+                                Syousetsu.History.SaveItem(item);
+                            }
+                            else
+                            {
+                                throw new Exception("Link not valid!" + Environment.NewLine + item.Link);
+                            }
                         }
-                        else
+                        catch (Exception e)
                         {
-                            throw new Exception("Link not valid!" + Environment.NewLine + item.Link);
+                            MessageBox.Show(e.Message, "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        MessageBox.Show(e.Message, "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
                         )
@@ -209,32 +212,38 @@ namespace syosetuDownloader
             if (!_updating) this.Close();
         }
 
-        private void OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        private void FinishedCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            Point point = Mouse.GetPosition(viewHistoryList);
-            // click was on header, not on cell
-            if (point.Y < 2 + Util.GridViewTool.GetHeaderHeight(viewHistoryList, 0)) return;
-
-            int col = 0;
-            double accumulatedWidth = 0.0;
-
-            // calc col mouse was over
-            foreach (var columnDefinition in viewHistoryGrid.Columns)
+            foreach (Syousetsu.History.Item item in viewHistoryList.SelectedItems)
             {
-                accumulatedWidth += columnDefinition.ActualWidth;
-                if (accumulatedWidth >= point.X)
-                    break;
-                col++;
-            }
-
-            if (col == 0) // favorite
-            {
-                if (GetCurrentItem() != null)
-                {
-                    FavoriteCommand_Executed(null, null);
-                }
+                item.Finished = !item.Finished;
+                Syousetsu.History.SaveItem(item);
             }
         }
+
+        //private void OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        //{
+        //    Point point = Mouse.GetPosition(viewHistoryList);
+        //    // click was on header, not on cell
+        //    if (point.Y < 2 + Util.GridViewTool.GetHeaderHeight(viewHistoryList, 0)) return;
+        //    int col = 0;
+        //    double accumulatedWidth = 0.0;
+        //    // calc col mouse was over
+        //    foreach (var columnDefinition in viewHistoryGrid.Columns)
+        //    {
+        //        accumulatedWidth += columnDefinition.ActualWidth;
+        //        if (accumulatedWidth >= point.X)
+        //            break;
+        //        col++;
+        //    }
+        //    if (col == 1) // favorite
+        //    {
+        //        if (GetCurrentItem() != null)
+        //        {
+        //            FavoriteCommand_Executed(null, null);
+        //        }
+        //    }
+        //}
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
@@ -295,6 +304,13 @@ namespace syosetuDownloader
                 typeof(CustomCommands),
                 new InputGestureCollection() { new KeyGesture(Key.Escape, ModifierKeys.None) }
             );
+        public static readonly RoutedUICommand Finished = new RoutedUICommand
+            (
+                "Finished",
+                "Finished",
+                typeof(CustomCommands),
+                new InputGestureCollection() { new KeyGesture(Key.F10, ModifierKeys.None) }
+            );
     }
 
     public class FavoriteBooleanConverter : IValueConverter
@@ -320,6 +336,35 @@ namespace syosetuDownloader
                 case "⚫":
                     return true;
                 case " ":
+                    return false;
+            }
+            return false;
+        }
+    }
+
+    public class FinishedBooleanConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter,
+                System.Globalization.CultureInfo culture)
+        {
+            if (value is bool)
+            {
+                if ((bool)value == true)
+                    return "終";
+                else
+                    return "";
+            }
+            return "";
+        }
+        // unused
+        public object ConvertBack(object value, Type targetType, object parameter,
+                System.Globalization.CultureInfo culture)
+        {
+            switch (value.ToString())
+            {
+                case "終":
+                    return true;
+                case "":
                     return false;
             }
             return false;

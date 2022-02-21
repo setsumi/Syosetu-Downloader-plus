@@ -27,15 +27,17 @@
         <CommandBinding Command="local:CustomCommands.Select" Executed="SelectCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
         <CommandBinding Command="local:CustomCommands.Web" Executed="WebCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
         <CommandBinding Command="local:CustomCommands.Close" Executed="CloseCommand_Executed"/>
+        <CommandBinding Command="local:CustomCommands.Finished" Executed="FinishedCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
     </Window.CommandBindings>
     <Grid>
-        <Button Content="Favorite" HorizontalAlignment="Center" Margin="-220,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Favorite" ToolTip="(F2)"/>
+        <Button Content="Favorite" HorizontalAlignment="Center" Margin="-220,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Favorite" ToolTip="Toggle Favorite (F2)"/>
         <Button Content="Update" HorizontalAlignment="Center" Margin="-110,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Update" ToolTip="Check for Updates (F5)"/>
         <Button Content="Remove" HorizontalAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Remove" ToolTip="(F8)"/>
         <Button Content="Select" HorizontalAlignment="Center" Margin="110,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Select" ToolTip="Choose to Download (Enter)"/>
         <Button Content="Web" HorizontalAlignment="Center" Margin="220,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Web" ToolTip="Open Web Site (Ctrl+Enter)"/>
+        <Button Content="Finished" HorizontalAlignment="Center" Margin="330,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Finished" ToolTip="Toggle Finished (F10)"/>
         <ListView x:Name="viewHistoryList" FontSize="13"
-          Background="Transparent" PreviewMouseLeftButtonUp="OnPreviewMouseLeftButtonUp"
+          Background="Transparent"
           IsSynchronizedWithCurrentItem="True"
           util:GridViewSort.AutoSort="True"
           util:GridViewSort.SortGlyphAscending="up.png"
@@ -62,6 +64,7 @@
             </ListView.ItemContainerStyleSelector>
             <ListView.Resources>
                 <local:FavoriteBooleanConverter x:Key="FavoriteBooleanConverter"/>
+                <local:FinishedBooleanConverter x:Key="FinishedBooleanConverter"/>
                 <!--<Style TargetType="{x:Type GridViewColumnHeader}">
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                 </Style>-->
@@ -94,7 +97,7 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Header="Title" util:GridViewSort.PropertyName="Title" Width="420">
+                        <GridViewColumn Header="Title" util:GridViewSort.PropertyName="Title" Width="380">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis">
@@ -114,9 +117,19 @@
                         <GridViewColumn Header="Total"
                                 DisplayMemberBinding="{Binding Total}"
                                 util:GridViewSort.PropertyName="Total"/>
+                        <GridViewColumn Header="New"
+                                DisplayMemberBinding="{Binding New}"
+                                util:GridViewSort.PropertyName="New"/>
                         <GridViewColumn Header="Last DL"
                                 DisplayMemberBinding="{Binding Date}"
                                 util:GridViewSort.PropertyName="Date"/>
+                        <GridViewColumn Header="Finished" util:GridViewSort.PropertyName="Finished">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Finished, Converter={StaticResource FinishedBooleanConverter}, Mode=Default}"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                         <GridViewColumn Header="Link"
                                 DisplayMemberBinding="{Binding Link}"
                                 util:GridViewSort.PropertyName="Link"/>
