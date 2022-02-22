@@ -13,6 +13,7 @@ Download chapters from Syosetsu ni Narou and Kakuyomu
     - Sites links
     - Ability to open site and novel URL in browser
     - Download history manager
+    - Download folder selection
 - Kakuyomu support
 
 Original project **[here](https://github.com/LordZero25/Syosetu-Downloader/)**
