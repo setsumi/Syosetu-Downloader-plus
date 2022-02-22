@@ -403,7 +403,10 @@ namespace syosetuDownloader
         {
             var dialog = new CommonOpenFileDialog();
             dialog.IsFolderPicker = true;
+            dialog.EnsurePathExists = true;
+            dialog.Multiselect = false;
             dialog.DefaultDirectory = _dl_dir;
+            dialog.InitialDirectory = _dl_dir;
             CommonFileDialogResult result = dialog.ShowDialog();
             if (result == CommonFileDialogResult.Ok)
             {
