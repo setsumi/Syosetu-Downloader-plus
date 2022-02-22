@@ -8,7 +8,7 @@ Download chapters from Syosetsu ni Narou and Kakuyomu
 - TOC: Series name, novel name, author name
 - GUI: Completed or cancelled downloads are marked as such
     - Helpful tooltips
-    - Dropdown list of links populated from `.URL` web shortcuts placed in program folder
+    - Dropdown list of links populated from `.URL` web shortcuts placed in download folder
     - Resizable window
     - Sites links
     - Ability to open site and novel URL in browser
