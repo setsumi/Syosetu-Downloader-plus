@@ -42,6 +42,18 @@
         <ScrollViewer Margin="0,268,0,0" x:Name="scrollViewer1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <StackPanel x:Name="stackPanel1" />
         </ScrollViewer>
-        <Button x:Name="btnExplore" Content="Explore" HorizontalAlignment="Right" Margin="0,79,12,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Click="btnExplore_Click" ToolTip="Open program folder in Windows Explorer"/>
+        <Button x:Name="btnExplore" Content="..." HorizontalAlignment="Right" Margin="0,79,32,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalContentAlignment="Center" Click="btnExplore_Click" ToolTip="Open Download folder in Windows Explorer"/>
+        <StackPanel Orientation="Horizontal" Margin="0,79,14,0" HorizontalAlignment="Right" VerticalAlignment="Top" Height="23">
+            <MenuItem Click="DownloadFolderDropdownButton_Click" Width="17" GotFocus="DownloadFolderMenuItem_GotFocus">
+                <MenuItem.Icon>
+                    <Image Source="down.png" Height="6"/>
+                </MenuItem.Icon>
+                <MenuItem.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Choose Download Folder" Click="DownloadFolderMenuItem_Click"/>
+                    </ContextMenu>
+                </MenuItem.ContextMenu>
+            </MenuItem>
+        </StackPanel>
     </Grid>
 </Window>

@@ -701,8 +701,7 @@ namespace Syousetsu
             string path;
             if (!details.FilenameFormat.Contains('/') && !details.FilenameFormat.Contains('\\'))
             {
-                path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
-                    details.SeriesTitle);
+                path = Path.Combine(details.Path, details.SeriesTitle);
             }
             else
             {
@@ -713,7 +712,7 @@ namespace Syousetsu
                 string tempFormat = (temp.Length > 1) ? String.Join("\\", temp) : temp[0];
 
                 path = Path.Combine(new string[] {
-                    Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
+                    details.Path,
                     details.SeriesTitle,
                     String.Format(tempFormat, new object[]{ 0, details.GetChapterByIndex(0).title, details.SeriesCode})
                 });
@@ -722,13 +721,12 @@ namespace Syousetsu
             return path;
         }
 
-        private static string CheckDirectory(Syousetsu.Constants details, int current)
+        private static string CheckDirectory(Constants details, int current)
         {
             string path;
             if (!details.FilenameFormat.Contains('/') && !details.FilenameFormat.Contains('\\'))
             {
-                path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
-                    details.SeriesTitle);
+                path = Path.Combine(details.Path, details.SeriesTitle);
             }
             else
             {
@@ -739,7 +737,7 @@ namespace Syousetsu
                 string tempFormat = (temp.Length > 1) ? String.Join("\\", temp) : temp[0];
 
                 path = Path.Combine(new string[] {
-                    Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
+                    details.Path,
                     details.SeriesTitle,
                     String.Format(tempFormat, new object[]{ current, details.GetChapterByIndex(current).title,
                         details.SeriesCode})

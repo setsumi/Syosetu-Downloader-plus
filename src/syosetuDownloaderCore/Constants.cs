@@ -53,9 +53,10 @@ namespace Syousetsu
         int _lastDownloaded = 0;
 
         // Constructor
-        public Constants(string link, string exedir)
+        public Constants(string link, string exedir, string dldir)
         {
             _link = link;
+            _path = dldir;
 
             // load user agents from file
             if (!string.IsNullOrEmpty(exedir))
@@ -158,7 +159,6 @@ namespace Syousetsu
         public string Path
         {
             get { return _path; }
-            set { _path = value; }
         }
 
         public string Link

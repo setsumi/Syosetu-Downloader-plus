@@ -119,7 +119,7 @@ namespace syosetuDownloader
                     {
                         try
                         {
-                            Syousetsu.Constants sc = new Syousetsu.Constants(item.Link, null);
+                            Syousetsu.Constants sc = new Syousetsu.Constants(item.Link, null, null);
                             HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(item.Link, sc);
                             if (Syousetsu.Methods.IsValid(toc, sc))
                             {
@@ -323,9 +323,9 @@ namespace syosetuDownloader
                 if ((bool)value == true)
                     return "⚫";
                 else
-                    return " ";
+                    return "";
             }
-            return " ";
+            return "";
         }
         // unused
         public object ConvertBack(object value, Type targetType, object parameter,
@@ -335,7 +335,7 @@ namespace syosetuDownloader
             {
                 case "⚫":
                     return true;
-                case " ":
+                case "":
                     return false;
             }
             return false;

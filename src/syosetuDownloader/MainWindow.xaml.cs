@@ -19,6 +19,7 @@ using System.Media;
 using System.Windows.Threading;
 using System.Xml.Linq;
 using System.Xml;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace syosetuDownloader
 {
@@ -37,7 +38,8 @@ namespace syosetuDownloader
 
         Shell32.Shell _shell;
         string _exe_dir;
-        readonly string _version = "2.4.0 plus 9";
+        string _dl_dir;
+        readonly string _version = "2.4.0 plus 10";
         
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
@@ -66,19 +68,14 @@ namespace syosetuDownloader
                 | (SecurityProtocolType)12288;
 
             _exe_dir = System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            _dl_dir = _exe_dir;
             _shell = new Shell32.Shell();
 
             this.Title += _version;
-            txtLink.ToolTip = "(Alt+↓)  dropdown list, populated from (.url) web shortcuts\n"
-                + "(Ctrl+Enter)  open url in browser";
-            cbSite.ToolTip = "(Alt+↓)  dropdown list, populated from website.txt\n"
-                + "(Ctrl+Enter)  open site in browser";
-            PopulateNovelsURLs(txtLink);
-            PopulateSiteLinks(cbSite);
-            if (cbSite.Items.Count > 0)
-            {
-                cbSite.SelectedIndex = 0;
-            }
+            txtLink.ToolTip = "(Alt+↓)  dropdown list, populated from (.url) web shortcuts"
+                + Environment.NewLine + "(Ctrl+Enter)  open url in browser";
+            cbSite.ToolTip = "(Alt+↓)  dropdown list, populated from website.txt"
+                + Environment.NewLine + "(Ctrl+Enter)  open site in browser";
         }
 
         void PopulateNovelsURLs(ComboBox cb)
@@ -86,9 +83,9 @@ namespace syosetuDownloader
             List<NovelDrop> items = new List<NovelDrop>();
 
             // Get the shortcut's folder.
-            Shell32.Folder shortcut_folder = _shell.NameSpace(_exe_dir);
+            Shell32.Folder shortcut_folder = _shell.NameSpace(_dl_dir);
 
-            string[] fileEntries = Directory.GetFiles(_exe_dir);
+            string[] fileEntries = Directory.GetFiles(_dl_dir);
             foreach (string file in fileEntries)
             {
                 if (System.IO.Path.GetExtension(file).Equals(".url", StringComparison.OrdinalIgnoreCase))
@@ -176,7 +173,7 @@ namespace syosetuDownloader
                 MessageBox.Show("Link not valid!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
-            Syousetsu.Constants sc = new Syousetsu.Constants(_link, _exe_dir);
+            Syousetsu.Constants sc = new Syousetsu.Constants(_link, _exe_dir, _dl_dir);
             sc.AddChapter("", ""); // start chapters from 1
             HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(_link, sc);
 
@@ -227,11 +224,7 @@ namespace syosetuDownloader
             };
             lb.MouseDown += (snt, evt) =>
             {
-                string path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), sc.SeriesTitle);
-                if (System.IO.Directory.Exists(path))
-                {
-                    System.Diagnostics.Process.Start("explorer.exe", path);
-                }
+                _shell.Explore(System.IO.Path.Combine(_dl_dir, sc.SeriesTitle));
             };
 
             stackPanel1.Children.Add(lb);
@@ -279,10 +272,12 @@ namespace syosetuDownloader
             //}
 
             LoadConfig();
+            PopulateNovelsURLs(txtLink);
+            PopulateSiteLinks(cbSite);
+            if (cbSite.Items.Count > 0) cbSite.SelectedIndex = 0;
 
             // focus history button
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => btnHistory.Focus()));
-
+            btnHistory.Focus();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -292,7 +287,7 @@ namespace syosetuDownloader
 
         private void btnExplore_Click(object sender, RoutedEventArgs e)
         {
-            _shell.Explore(_exe_dir);
+            _shell.Explore(_dl_dir);
         }
 
         private void btnHistory_Click(object sender, RoutedEventArgs e)
@@ -334,11 +329,19 @@ namespace syosetuDownloader
             string file = _exe_dir + System.IO.Path.DirectorySeparatorChar + "config.xml";
             if (!File.Exists(file)) return;
 
-            XElement level1Element = XElement.Load(file).Element("historySort");
-            Enum.TryParse(level1Element.Attribute("direction").Value, out System.ComponentModel.ListSortDirection dir);
+            XElement fileElem = XElement.Load(file);
+
+            XElement elem = fileElem.Element("historySort");
+            Enum.TryParse(elem.Attribute("direction").Value, out System.ComponentModel.ListSortDirection dir);
             sortInfo.Direction = dir;
-            sortInfo.PropertyName = level1Element.Attribute("propertyName").Value;
-            sortInfo.ColumnName = level1Element.Attribute("columnName").Value;
+            sortInfo.PropertyName = elem.Attribute("propertyName").Value;
+            sortInfo.ColumnName = elem.Attribute("columnName").Value;
+            try // newly added stuff
+            {
+                elem = fileElem.Element("config");
+                _dl_dir = elem.Attribute("dlfolder").Value;
+            }
+            catch { }
         }
 
         public void SaveConfig()
@@ -367,7 +370,46 @@ namespace syosetuDownloader
             node.Attributes.Append(attr);
 
             rootNode.AppendChild(node);
+
+            node = doc.CreateElement("config");
+
+            attr = doc.CreateAttribute("dlfolder");
+            attr.Value = _dl_dir;
+            node.Attributes.Append(attr);
+
+            rootNode.AppendChild(node);
+
             doc.Save(file);
+        }
+
+        private void DownloadFolderDropdownButton_Click(object sender, RoutedEventArgs e)
+        {
+            var addButton = sender as FrameworkElement;
+            if (addButton != null)
+            {
+                addButton.ContextMenu.IsOpen = true;
+            }
+        }
+        private void DownloadFolderMenuItem_GotFocus(object sender, RoutedEventArgs e)
+        {
+            // focus history button
+            btnHistory.Focus();
+
+            //TraversalRequest request = new TraversalRequest(FocusNavigationDirection.Next);
+            //MoveFocus(request);
+        }
+
+        private void DownloadFolderMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+            dialog.DefaultDirectory = _dl_dir;
+            CommonFileDialogResult result = dialog.ShowDialog();
+            if (result == CommonFileDialogResult.Ok)
+            {
+                _dl_dir = dialog.FileName;
+                SaveConfig();
+            }
         }
 
     }

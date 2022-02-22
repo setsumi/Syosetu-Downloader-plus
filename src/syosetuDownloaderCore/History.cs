@@ -42,7 +42,15 @@ namespace Syousetsu
             public DateTime Date { get => _date; set => _date = value; }
             public Constants.SiteType Site { get => _site; set => _site = value; }
             public string Code { get => _code; set => _code = value; }
-            public string New { get => this.Downloaded < this.Total ? "+" : ""; }
+            public string New
+            {
+                get
+                {
+                    if (Downloaded < Total) return "+";
+                    else if (Downloaded > Total) return "-";
+                    else return "";
+                }
+            }
             public bool Finished
             {
                 get => _finished;
