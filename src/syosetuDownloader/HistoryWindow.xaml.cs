@@ -195,7 +195,7 @@ namespace syosetuDownloader
             int from = item.Downloaded;
             _parent.txtFrom.Text = (from > item.Total ? item.Total : from).ToString();
             _parent.txtTo.Text = "";
-            //Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => _parent.btnDownload.Focus()));
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => _parent.btnDownload.Focus()));
             this.Close();
         }
 
