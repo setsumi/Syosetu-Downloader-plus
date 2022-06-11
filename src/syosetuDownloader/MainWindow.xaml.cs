@@ -39,7 +39,7 @@ namespace syosetuDownloader
         Shell32.Shell _shell;
         string _exe_dir;
         string _dl_dir;
-        readonly string _version = "2.4.0 plus 11";
+        readonly string _version = "2.4.0 plus 12";
         
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
@@ -153,6 +153,29 @@ namespace syosetuDownloader
         {
             btnHistory.Focus();
 
+            Label lb = new Label();
+            lb.Content = "Preparing...";
+            lb.Background = Brushes.Gold;
+            ProgressBar pb = new ProgressBar();
+            pb.Height = 10;
+            pb.Tag = 0;
+            Separator s = new Separator();
+            s.Height = 5;
+
+            _row += 1;
+            _controls.Add(new Syousetsu.Controls { ID = _row, Label = lb, ProgressBar = pb, Separator = s });
+
+            stackPanel1.Children.Add(lb);
+            stackPanel1.Children.Add(pb);
+            stackPanel1.Children.Add(s);
+            scrollViewer1.ScrollToLeftEnd();
+            scrollViewer1.ScrollToBottom();
+            scrollViewer1.Dispatcher.Invoke(DispatcherPriority.Render, EmptyDelegate);
+
+            Application.Current.Dispatcher.InvokeAsync(() => Download(), DispatcherPriority.Background);
+        }
+        private void Download()
+        {
             this._link = txtLink.Text;
             this._start = txtFrom.Text;
             this._end = txtTo.Text;
@@ -186,20 +209,16 @@ namespace syosetuDownloader
 
 
             GetFilenameFormat();
-            _row += 1;
 
-            Label lb = new Label();
+            // set up download progress gui-controls
+            Label lb = _controls.Last().Label;
             lb.Content = Syousetsu.Methods.GetTitle(toc, sc);
+            lb.Background = Brushes.Transparent;
             lb.ToolTip = "Click to open folder";
 
-            ProgressBar pb = new ProgressBar();
+            ProgressBar pb = _controls.Last().ProgressBar;
             pb.Maximum = (_end == String.Empty) ? Syousetsu.Methods.GetTotalChapters(toc, sc) : Convert.ToDouble(_end);
             pb.ToolTip = "Click to stop download";
-            pb.Height = 10;
-            pb.Tag = 0;
-
-            Separator s = new Separator();
-            s.Height = 5;
 
             _start = (_start == String.Empty) ? "1" : _start;
             _end = pb.Maximum.ToString();
@@ -229,14 +248,9 @@ namespace syosetuDownloader
                 _shell.Explore(System.IO.Path.Combine(_dl_dir, sc.SeriesTitle));
             };
 
-            stackPanel1.Children.Add(lb);
-            stackPanel1.Children.Add(pb);
-            stackPanel1.Children.Add(s);
             scrollViewer1.ScrollToLeftEnd();
             scrollViewer1.ScrollToBottom();
             scrollViewer1.Dispatcher.Invoke(DispatcherPriority.Render, EmptyDelegate);
-
-            _controls.Add(new Syousetsu.Controls { ID = _row, Label = lb, ProgressBar = pb, Separator = s });
         }
 
         private void rbText_Checked(object sender, RoutedEventArgs e)
