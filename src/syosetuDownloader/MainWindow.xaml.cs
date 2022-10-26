@@ -39,7 +39,7 @@ namespace syosetuDownloader
         Shell32.Shell _shell;
         string _exe_dir;
         string _dl_dir;
-        readonly string _version = "2.4.0 plus 12";
+        readonly string _version = "2.4.0 plus 13";
         
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 

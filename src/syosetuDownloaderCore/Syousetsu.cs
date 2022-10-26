@@ -539,18 +539,24 @@ namespace Syousetsu
 
             //get css link and download
             List<string> cssink = new List<string>();
+            string[] patterns = { "(href=\")(?<link>.+)(?=\" media)", "(href=\")(?<link>.+)(?=\">)" };
             string pattern;
             Regex r;
-            Match m;
+            Match m = Match.Empty;
             foreach (HtmlNode node in cssNode)
             {
-                if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
-                    pattern = "(href=\")(?<link>.+)(?=\" media)";
-                else // kakuyomu
-                    pattern = "(href=\")(?<link>.+)(?=\">)";
+                foreach (string p in patterns)
+                {
+                    r = new Regex(p);
+                    m = r.Match(node.OuterHtml);
+                    if (m.Groups["link"].Value.Length > 0) break;
+                }
 
-                r = new Regex(pattern);
-                m = r.Match(node.OuterHtml);
+                //if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
+                //    pattern = "(href=\")(?<link>.+)(?=\" media)";
+                //else // kakuyomu
+                //    pattern = "(href=\")(?<link>.+)(?=\">)";
+
                 cssink.Add(m.Groups["link"].Value);
             }
             DownloadCss(details, cssink);
