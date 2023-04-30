@@ -9,7 +9,6 @@ using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using System.Net;
 using System.IO;
-using System.Windows.Media;
 
 namespace Syousetsu
 {
@@ -17,6 +16,9 @@ namespace Syousetsu
     {
         public static CancellationTokenSource AddDownloadJob(Syousetsu.Constants details, ProgressBar pb, Label lb)
         {
+            var taskbar = Microsoft.WindowsAPICodePack.Taskbar.TaskbarManager.Instance;
+            taskbar.SetProgressState(Microsoft.WindowsAPICodePack.Taskbar.TaskbarProgressBarState.Normal);
+
             int max = Convert.ToInt32(pb.Maximum);
 
             int i = 0;
@@ -58,7 +60,7 @@ namespace Syousetsu
                     details.LastDownloaded = ctr;
                     History.SaveNovel(details);
 
-                    pb.Dispatcher.Invoke((Action)(() => { pb.Value = ctr; }));
+                    pb.Dispatcher.Invoke((Action)(() => { pb.Value = ctr; taskbar.SetProgressValue(ctr, max); }));
                     if (upTo != -1 && ctr > upTo)//stop loop if the specifed range is reached
                     {
                         break;
@@ -73,6 +75,7 @@ namespace Syousetsu
                 }
                 pb.Dispatcher.Invoke((Action)(() =>
                 {
+                    taskbar.SetProgressState(Microsoft.WindowsAPICodePack.Taskbar.TaskbarProgressBarState.NoProgress);
                     //pb.Value = max;
                     pb.ToolTip = null;
                     pb.Tag = 1;
