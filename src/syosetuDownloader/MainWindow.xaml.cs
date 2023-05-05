@@ -39,7 +39,7 @@ namespace syosetuDownloader
         Shell32.Shell _shell;
         string _exe_dir;
         string _dl_dir;
-        readonly string _version = "2.4.0 plus 14";
+        readonly string _version = "2.4.0 plus 14a";
         
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
@@ -152,6 +152,9 @@ namespace syosetuDownloader
         private void btnDownload_Click(object sender, RoutedEventArgs e)
         {
             btnHistory.Focus();
+
+            var taskbar = Microsoft.WindowsAPICodePack.Taskbar.TaskbarManager.Instance;
+            taskbar.SetProgressState(Microsoft.WindowsAPICodePack.Taskbar.TaskbarProgressBarState.Indeterminate);
 
             Label lb = new Label();
             lb.Content = "Preparing...";
