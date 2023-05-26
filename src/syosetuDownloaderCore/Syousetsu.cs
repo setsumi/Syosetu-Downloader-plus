@@ -413,6 +413,12 @@ namespace Syousetsu
                 }
             }
         }
+
+        public static string FormatValidFileName(string filename)
+        {
+            return filename.Replace("\\", "＼").Replace("/", "／").Replace(":", "：").Replace("*", "＊").
+                Replace("?", "？").Replace("\"", "“").Replace("<", "＜").Replace(">", "＞").Replace("|", "｜");
+        }
     }
 
     public class Create
@@ -473,10 +479,11 @@ namespace Syousetsu
         {
             string path = CheckDirectory(details, current);
 
-            //replace illigal character(s) with "□"
-            string regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
-            Regex r = new Regex(string.Format("[{0}]", System.Text.RegularExpressions.Regex.Escape(regexSearch)));
-            chapter[0] = r.Replace(chapter[0], "□");
+            //replace illegal character(s)
+            //string regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+            //Regex r = new Regex(string.Format("[{0}]", System.Text.RegularExpressions.Regex.Escape(regexSearch)));
+            //chapter[0] = r.Replace(chapter[0], "□");
+            chapter[0] = Methods.FormatValidFileName(chapter[0]);
 
             //save the chapter
             string fileName = details.FilenameFormat.Replace("/", "\\")
@@ -636,7 +643,7 @@ namespace Syousetsu
 
                     //edit href
                     string fileName = details.FilenameFormat;
-                    fileName = String.Format(fileName + ".htm", i, details.GetChapterByIndex(i).title, details.SeriesCode);
+                    fileName = String.Format(fileName + ".htm", i, Methods.FormatValidFileName(details.GetChapterByIndex(i).title), details.SeriesCode);
                     node.ChildNodes["dd"].ChildNodes["a"].Attributes["href"].Value = "./" + fileName;
                     node.ChildNodes["dd"].ChildNodes["a"].InnerHtml = "(" + i + ") " +
                         node.ChildNodes["dd"].ChildNodes["a"].InnerHtml;
@@ -649,7 +656,7 @@ namespace Syousetsu
 
                     //edit href
                     string fileName = details.FilenameFormat;
-                    fileName = String.Format(fileName + ".htm", i, details.GetChapterByIndex(i).title, details.SeriesCode);
+                    fileName = String.Format(fileName + ".htm", i, Methods.FormatValidFileName(details.GetChapterByIndex(i).title), details.SeriesCode);
                     node.ChildNodes["a"].Attributes["href"].Value = "./" + fileName;
                     node.ChildNodes["a"].ChildNodes["span"].InnerHtml = "(" + i + ") " +
                         node.ChildNodes["a"].ChildNodes["span"].InnerHtml;

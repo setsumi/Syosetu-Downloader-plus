@@ -39,7 +39,7 @@ namespace syosetuDownloader
         Shell32.Shell _shell;
         string _exe_dir;
         string _dl_dir;
-        readonly string _version = "2.4.0 plus 14a";
+        readonly string _version = "2.4.0 plus 15";
         
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
@@ -189,6 +189,7 @@ namespace syosetuDownloader
             if (String.IsNullOrWhiteSpace(_link) && fromToValid)
             {
                 MessageBox.Show("Error parsing link and/or chapter range!", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
             }
 
             if (!_link.StartsWith("http")) { _link = @"http://" + _link; }
@@ -199,6 +200,7 @@ namespace syosetuDownloader
             if (!Syousetsu.Methods.IsValidLink(_link))
             {
                 MessageBox.Show("Link not valid!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
             }
 
             Syousetsu.Constants sc = new Syousetsu.Constants(_link, _exe_dir, _dl_dir);
@@ -208,6 +210,7 @@ namespace syosetuDownloader
             if (!Syousetsu.Methods.IsValid(toc, sc))
             {
                 MessageBox.Show("Link not valid!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
             }
 
 
@@ -215,7 +218,7 @@ namespace syosetuDownloader
 
             // set up download progress gui-controls
             Label lb = _controls.Last().Label;
-            lb.Content = Syousetsu.Methods.GetTitle(toc, sc);
+            lb.Content = Syousetsu.Methods.FormatValidFileName(Syousetsu.Methods.GetTitle(toc, sc));
             lb.Background = Brushes.Transparent;
             lb.ToolTip = "Click to open folder";
 
