@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using System.Net;
 using System.IO;
+using System.Diagnostics;
 
 namespace Syousetsu
 {
@@ -207,6 +208,46 @@ namespace Syousetsu
             }
             else if (details.CurrentFileType == Constants.FileType.HTML)
             {
+                StringBuilder sb = new StringBuilder();
+
+                foreach (HtmlNode img in novelNode.Descendants("img"))
+                {
+                    string src = img.GetAttributeValue("src", null);
+                    if (src != null)
+                    {
+                        if (!src.StartsWith("http"))
+                        {
+                            img.SetAttributeValue("src", "https:" + src);
+                        }
+                    }
+                }
+                foreach (HtmlNode img in novelNode.Descendants("a"))
+                {
+                    string src = img.GetAttributeValue("href", null);
+                    if (src != null)
+                    {
+                        if (!src.StartsWith("http"))
+                        {
+                            img.SetAttributeValue("href", "https:" + src);
+                        }
+                    }
+                }
+
+                foreach (HtmlNode childNode in novelNode.ChildNodes)
+                {
+                    sb.AppendLine(childNode.OuterHtml);
+                }
+
+                if (footerNode != null)
+                {
+                    sb.AppendLine("<hr/>");
+                    foreach (HtmlNode childNode in footerNode.ChildNodes)
+                    {
+                        sb.AppendLine(childNode.OuterHtml);
+                    }
+                }
+
+                /*
                 string[] s = novelNode.InnerText.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
 
                 StringBuilder sb = new StringBuilder();
@@ -227,6 +268,7 @@ namespace Syousetsu
                         sb.AppendLine(temp);
                     }
                 }
+                */
 
                 return sb.ToString();
             }
@@ -475,7 +517,7 @@ namespace Syousetsu
             return chapter;
         }
 
-        public static void SaveFile(Syousetsu.Constants details, string[] chapter, int current)
+        public static void SaveFile(Constants details, string[] chapter, int current)
         {
             string path = CheckDirectory(details, current);
 
@@ -498,7 +540,9 @@ namespace Syousetsu
                 fileName = String.Format(fileName + ".htm",
                     new object[] { current, chapter[0], details.SeriesCode });
 
-                File.WriteAllText(Path.Combine(path, "ChapterStyle.css"), "@charset \"UTF - 8\";\n/*chapter css here*/");
+                //File.WriteAllText(Path.Combine(path, "ChapterStyle.css"), "@charset \"UTF-8\";\n/*chapter css here*/\nrt{font-size:.8em;}");
+                File.Copy(Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "ChapterStyle.css"),
+                    Path.Combine(path, "ChapterStyle.css"), true);
             }
 
             chapter[0] = String.Empty;

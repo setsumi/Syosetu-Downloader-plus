@@ -190,6 +190,11 @@
     <Resource Include="down.png" />
     <Resource Include="up.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="ChapterStyle.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>del $(ProjectDir)$(OutDir)*.pdb
