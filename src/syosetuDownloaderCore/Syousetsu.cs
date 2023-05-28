@@ -240,7 +240,7 @@ namespace Syousetsu
 
                 if (footerNode != null)
                 {
-                    sb.AppendLine("<hr/>");
+                    sb.AppendLine("<br><br><hr><br>");
                     foreach (HtmlNode childNode in footerNode.ChildNodes)
                     {
                         sb.AppendLine(childNode.OuterHtml);
