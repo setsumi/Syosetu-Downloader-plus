@@ -217,7 +217,34 @@ namespace Syousetsu
                     {
                         if (!src.StartsWith("http"))
                         {
-                            img.SetAttributeValue("src", "https:" + src);
+                            src = "https:" + src;
+                            img.SetAttributeValue("src", src);
+                        }
+
+                        // try to download and embed image
+                        try
+                        {
+                            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(src);
+                            request.Method = "GET";
+                            request.CookieContainer = details.SyousetsuCookie;
+                            request.UserAgent = details.UserAgent;
+
+                            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                            using (Stream stream = response.GetResponseStream())
+                            using (MemoryStream ms = new MemoryStream())
+                            {
+                                stream.CopyTo(ms, (int)response.ContentLength);
+                                string base64String = Convert.ToBase64String(ms.ToArray());
+                                string imageSrc = string.Format("data:image/png;base64,{0}", base64String);
+                                img.SetAttributeValue("src", imageSrc);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            byte[] fileBytes = File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "image-error.png"));
+                            string base64String = Convert.ToBase64String(fileBytes);
+                            string imageSrc = string.Format("data:image/png;base64,{0}", base64String);
+                            img.SetAttributeValue("src", imageSrc);
                         }
                     }
                 }
@@ -345,7 +372,7 @@ namespace Syousetsu
                 headerNode = doc.DocumentNode.SelectSingleNode("//div[@id='novel_p']");
             }
             else // kakuyomu
-            { 
+            {
                 titleNode = doc.DocumentNode.SelectSingleNode("//p[@class='chapterTitle']/span");
                 headerNode = null;
             }
