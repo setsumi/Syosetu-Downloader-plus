@@ -1,21 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Net;
 using HtmlAgilityPack;
 using System.IO;
 using System.Diagnostics;
-using System.Media;
 using System.Windows.Threading;
 using System.Xml.Linq;
 using System.Xml;
@@ -39,8 +32,8 @@ namespace syosetuDownloader
         Shell32.Shell _shell;
         string _exe_dir;
         string _dl_dir;
-        readonly string _version = "2.4.0 plus 16";
-        
+        readonly string _version = "2.4.0 plus 17";
+
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
         public class NovelDrop
@@ -175,7 +168,11 @@ namespace syosetuDownloader
             scrollViewer1.ScrollToBottom();
             scrollViewer1.Dispatcher.Invoke(DispatcherPriority.Render, EmptyDelegate);
 
-            Application.Current.Dispatcher.InvokeAsync(() => Download(), DispatcherPriority.Background);
+            Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                try { Download(); }
+                catch (Exception ex) { Syousetsu.Methods.Error(ex); }
+            }, DispatcherPriority.Background);
         }
         private void Download()
         {
@@ -188,7 +185,7 @@ namespace syosetuDownloader
 
             if (String.IsNullOrWhiteSpace(_link) && fromToValid)
             {
-                MessageBox.Show("Error parsing link and/or chapter range!", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error parsing link and/or chapter range.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -199,7 +196,7 @@ namespace syosetuDownloader
 
             if (!Syousetsu.Methods.IsValidLink(_link))
             {
-                MessageBox.Show("Link not valid!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Link is not valid.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -209,7 +206,7 @@ namespace syosetuDownloader
 
             if (!Syousetsu.Methods.IsValid(toc, sc))
             {
-                MessageBox.Show("Link not valid!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Link is not valid.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 

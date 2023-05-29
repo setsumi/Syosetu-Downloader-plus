@@ -93,47 +93,23 @@ namespace Syousetsu
                     }
 
                 }));
-            }, ct.Token);
+            }, ct.Token).ContinueWith(t =>
+            {
+                var ex = t.Exception?.GetBaseException();
+                if (ex != null) Error(ex);
+            }, TaskContinuationOptions.OnlyOnFaulted);
 
             return ct;
         }
 
-        public static void AddDownloadJob(Constants details)
+        private static syosetuDownloaderCore.MessageForm _messageForm = null;
+        public static void Error(Exception ex)
         {
-            int max = Convert.ToInt32(details.End);
-
-            int i = 0;
-            int upTo = -1;
-            if (details.Start != String.Empty && details.End == String.Empty)//determine if user don't want to start at chapter 1
+            System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                i = Convert.ToInt32(details.Start);
-            }
-            else if (details.Start == String.Empty && details.End != String.Empty)//determine if user wants to end at a specific chapter
-            {
-                i = 1;
-                upTo = max;
-            }
-            else if (details.Start != String.Empty && details.End != String.Empty)//determine if user only wants to download a specifc range
-            {
-                i = Convert.ToInt32(details.Start);//get start of the range
-                upTo = max;//get the end of the range
-            }
-            else
-            {
-                i = 1;//if both textbox are blank assume user wants to start from the first chapter "http://*.syosetu.com/xxxxxxx/1" until the latest/last one "http://*.syosetu.com/xxxxxxx/*"
-            }
-
-            for (int ctr = i; ctr <= max; ctr++)
-            {
-                string subLink = details.Link + ctr;
-                string[] chapter = Create.GenerateContents(details, GetPage(subLink, details), ctr);
-                Create.SaveFile(details, chapter, ctr);
-
-                if (upTo != -1 && ctr > upTo)//stop loop if the specifed range is reached
-                {
-                    break;
-                }
-            }
+                if (_messageForm == null) _messageForm = new syosetuDownloaderCore.MessageForm();
+                _messageForm.Error($"{DateTime.Now}  ErrorType = {ex.GetType()};  ErrorMessage = {ex.Message}");
+            }, System.Windows.Threading.DispatcherPriority.Normal);
         }
 
         public static HtmlDocument GetTableOfContents(string link, Constants details)

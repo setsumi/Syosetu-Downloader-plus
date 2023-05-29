@@ -1,23 +1,14 @@
 ﻿using HtmlAgilityPack;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Windows.Threading;
-using System.Xml;
-using System.Xml.Linq;
 
 namespace syosetuDownloader
 {
@@ -117,32 +108,25 @@ namespace syosetuDownloader
                 {
                     if (!item.Finished)
                     {
-                        try
+                        Syousetsu.Constants sc = new Syousetsu.Constants(item.Link, null, null);
+                        HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(item.Link, sc);
+                        if (Syousetsu.Methods.IsValid(toc, sc))
                         {
-                            Syousetsu.Constants sc = new Syousetsu.Constants(item.Link, null, null);
-                            HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(item.Link, sc);
-                            if (Syousetsu.Methods.IsValid(toc, sc))
-                            {
-                                item.Total = Syousetsu.Methods.GetTotalChapters(toc, sc);
-                                Syousetsu.History.SaveItem(item);
-                            }
-                            else
-                            {
-                                throw new Exception("Link not valid!" + Environment.NewLine + item.Link);
-                            }
+                            item.Total = Syousetsu.Methods.GetTotalChapters(toc, sc);
+                            Syousetsu.History.SaveItem(item);
                         }
-                        catch (Exception e)
+                        else
                         {
-                            MessageBox.Show(e.Message, "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
+                            throw new Exception("Link not valid!" + Environment.NewLine + item.Link);
                         }
                     }
-                }
-                        )
-                        .ContinueWith(delegate
-                        {
-                            UpdateStatus(-1);
-                        }
-                        , TaskScheduler.FromCurrentSynchronizationContext());
+                }).ContinueWith(t =>
+                {
+                    UpdateStatus(-1);
+                    var ex = t.Exception?.GetBaseException();
+                    if (ex != null) Syousetsu.Methods.Error(ex);
+
+                }, TaskScheduler.FromCurrentSynchronizationContext());
             }
 
             //    Updating = true;
