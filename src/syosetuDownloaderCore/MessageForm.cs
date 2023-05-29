@@ -46,5 +46,17 @@ namespace syosetuDownloaderCore
             e.Cancel = true; // Cancel the closure
             Hide(); // Hide the window
         }
+
+        private void MessageForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control == true && e.KeyCode == Keys.C)
+            {
+                if (listboxLog.SelectedItems.Count > 0)
+                {
+                    string s = listboxLog.SelectedItem.ToString();
+                    Clipboard.SetData(DataFormats.StringFormat, s);
+                }
+            }
+        }
     }
 }

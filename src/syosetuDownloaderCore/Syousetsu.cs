@@ -103,12 +103,14 @@ namespace Syousetsu
         }
 
         private static syosetuDownloaderCore.MessageForm _messageForm = null;
-        public static void Error(Exception ex)
+        public static void Error(Exception ex, string prefix = "")
         {
             System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 if (_messageForm == null) _messageForm = new syosetuDownloaderCore.MessageForm();
-                _messageForm.Error($"{DateTime.Now}  ErrorType = {ex.GetType()};  ErrorMessage = {ex.Message}");
+
+                prefix = string.IsNullOrEmpty(prefix) ? "  " : $"  {prefix}  ";
+                _messageForm.Error($"{DateTime.Now}{prefix}ErrorType = {ex.GetType()};  ErrorMessage = {ex.Message}");
             }, System.Windows.Threading.DispatcherPriority.Normal);
         }
 
@@ -215,12 +217,14 @@ namespace Syousetsu
                                 img.SetAttributeValue("src", imageSrc);
                             }
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
                             byte[] fileBytes = File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "image-error.png"));
                             string base64String = Convert.ToBase64String(fileBytes);
                             string imageSrc = string.Format("data:image/png;base64,{0}", base64String);
                             img.SetAttributeValue("src", imageSrc);
+
+                            Error(ex, $"Can't get image {src}");
                         }
                     }
                 }

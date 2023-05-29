@@ -65,10 +65,12 @@
             this.ClientSize = new System.Drawing.Size(744, 240);
             this.Controls.Add(this.listboxLog);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.KeyPreview = true;
             this.Name = "MessageForm";
-            this.Text = "Messages";
+            this.Text = "Messages   (Ctrl+C - copy)";
             this.TopMost = true;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MessageForm_FormClosing);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MessageForm_KeyDown);
             this.ResumeLayout(false);
 
         }
