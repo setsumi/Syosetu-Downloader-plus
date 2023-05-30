@@ -32,7 +32,7 @@ namespace syosetuDownloader
         Shell32.Shell _shell;
         string _exe_dir;
         string _dl_dir;
-        readonly string _version = "2.4.0 plus 17";
+        readonly string _version = "2.4.0 plus 18";
 
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
@@ -81,11 +81,11 @@ namespace syosetuDownloader
             string[] fileEntries = Directory.GetFiles(_dl_dir);
             foreach (string file in fileEntries)
             {
-                if (System.IO.Path.GetExtension(file).Equals(".url", StringComparison.OrdinalIgnoreCase))
+                if (Path.GetExtension(file).Equals(".url", StringComparison.OrdinalIgnoreCase))
                 {
                     //Get the shortcut's file.
                     Shell32.FolderItem folder_item =
-                        shortcut_folder.Items().Item(System.IO.Path.GetFileName(file));
+                        shortcut_folder.Items().Item(Path.GetFileName(file));
                     // Get shortcut's information.
                     Shell32.ShellLinkObject lnk = (Shell32.ShellLinkObject)folder_item.GetLink;
                     items.Add(new NovelDrop() { Novel = folder_item.Name, Link = lnk.Path });
@@ -141,6 +141,19 @@ namespace syosetuDownloader
             }
         }
 
+        private class ProgressMultiValueConverter : System.Windows.Data.IMultiValueConverter
+        {
+            public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+            {
+                if ((double)values[0] == 0) values[0] = "";
+                return $"{values[0]} {values[1]}";
+            }
+
+            public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture)
+            {
+                throw new NotImplementedException();
+            }
+        }
         private static Action EmptyDelegate = delegate () { };
         private void btnDownload_Click(object sender, RoutedEventArgs e)
         {
@@ -152,9 +165,22 @@ namespace syosetuDownloader
             Label lb = new Label();
             lb.Content = "Preparing...";
             lb.Background = Brushes.Gold;
+
             ProgressBar pb = new ProgressBar();
-            pb.Height = 10;
+            pb.Height = 15;
             pb.Tag = 0;
+
+            TextBlock tb = new TextBlock();
+            var binding = new System.Windows.Data.MultiBinding();
+            binding.Bindings.Add(new System.Windows.Data.Binding("Value") { Source = pb });
+            binding.Bindings.Add(new System.Windows.Data.Binding("ToolTip") { Source = pb });
+            binding.Converter = new ProgressMultiValueConverter();
+            tb.SetBinding(TextBlock.TextProperty, binding);
+            tb.HorizontalAlignment = HorizontalAlignment.Center;
+            tb.VerticalAlignment = VerticalAlignment.Center;
+            tb.Margin = new Thickness(0, -pb.Height, 0, 0);
+            tb.IsHitTestVisible = false;
+
             Separator s = new Separator();
             s.Height = 5;
 
@@ -163,6 +189,7 @@ namespace syosetuDownloader
 
             stackPanel1.Children.Add(lb);
             stackPanel1.Children.Add(pb);
+            stackPanel1.Children.Add(tb);
             stackPanel1.Children.Add(s);
             scrollViewer1.ScrollToLeftEnd();
             scrollViewer1.ScrollToBottom();
@@ -248,7 +275,7 @@ namespace syosetuDownloader
             };
             lb.MouseDown += (snt, evt) =>
             {
-                _shell.Explore(System.IO.Path.Combine(_dl_dir, sc.SeriesTitle));
+                _shell.Explore(Path.Combine(_dl_dir, sc.SeriesTitle));
             };
 
             scrollViewer1.ScrollToLeftEnd();
@@ -345,7 +372,7 @@ namespace syosetuDownloader
 
         public void LoadConfig()
         {
-            string file = _exe_dir + System.IO.Path.DirectorySeparatorChar + "config.xml";
+            string file = _exe_dir + Path.DirectorySeparatorChar + "config.xml";
             if (!File.Exists(file)) return;
 
             XElement fileElem = XElement.Load(file);
@@ -365,7 +392,7 @@ namespace syosetuDownloader
 
         public void SaveConfig()
         {
-            string file = _exe_dir + System.IO.Path.DirectorySeparatorChar + "config.xml";
+            string file = _exe_dir + Path.DirectorySeparatorChar + "config.xml";
 
             XmlDocument doc = new XmlDocument();
             XmlNode docNode = doc.CreateXmlDeclaration("1.0", "UTF-8", null);
