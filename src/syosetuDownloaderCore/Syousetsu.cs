@@ -548,8 +548,9 @@ namespace Syousetsu
                     new object[] { current, chapter[0], details.SeriesCode });
 
                 //File.WriteAllText(Path.Combine(path, "ChapterStyle.css"), "@charset \"UTF-8\";\n/*chapter css here*/\nrt{font-size:.8em;}");
-                File.Copy(Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "ChapterStyle.css"),
-                    Path.Combine(path, "ChapterStyle.css"), true);
+                string exe_path = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+                File.Copy(Path.Combine(exe_path, "ChapterStyle.css"), Path.Combine(path, "ChapterStyle.css"), true);
+                File.Copy(Path.Combine(exe_path, "emphasis-dots.png"), Path.Combine(path, "emphasis-dots.png"), true);
             }
 
             chapter[0] = String.Empty;

@@ -191,12 +191,17 @@
     <Resource Include="up.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="ChapterStyle.css">
+    <None Include="ChapterStyle.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="image-error.png">
+    </None>
+    <None Include="image-error.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="emphasis-dots.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

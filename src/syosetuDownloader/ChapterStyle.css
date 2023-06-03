@@ -1,5 +1,17 @@
 @charset "UTF-8";
 
+/* bigger furigana */
 rt {
     font-size: .8em;
+}
+
+/* kakuyomu: emphasis furigana-like dots */
+.emphasisDots > span {
+    padding: .35em 0;
+    background: url("emphasis-dots.png") no-repeat top center;
+    background-size: 3px 3px;
+}
+/* disable italic font */
+.emphasisDots {
+    font-style: unset;
 }
