@@ -32,7 +32,7 @@ namespace syosetuDownloader
         Shell32.Shell _shell;
         string _exe_dir;
         string _dl_dir;
-        readonly string _version = "2.4.0 plus 19";
+        readonly string _version = "2.4.0 plus 20";
 
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
@@ -275,7 +275,13 @@ namespace syosetuDownloader
             };
             lb.MouseDown += (snt, evt) =>
             {
-                _shell.Explore(Path.Combine(_dl_dir, sc.SeriesTitle));
+                //_shell.Explore(Path.Combine(_dl_dir, sc.SeriesTitle));
+                var psi = new ProcessStartInfo
+                {
+                    FileName = Path.Combine(_dl_dir, sc.SeriesTitle),
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
             };
 
             scrollViewer1.ScrollToLeftEnd();
@@ -333,7 +339,13 @@ namespace syosetuDownloader
 
         private void btnExplore_Click(object sender, RoutedEventArgs e)
         {
-            _shell.Explore(_dl_dir);
+            //_shell.Explore(_dl_dir);
+            var psi = new ProcessStartInfo
+            {
+                FileName = _dl_dir,
+                UseShellExecute = true
+            };
+            Process.Start(psi);
         }
 
         private void btnHistory_Click(object sender, RoutedEventArgs e)
