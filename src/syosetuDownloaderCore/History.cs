@@ -108,6 +108,12 @@ namespace Syousetsu
             SaveFile(item, file);
         }
 
+        public static void LoadNovel(Item item, Constants details)
+        {
+            string file = _folder + details.SeriesCode + ".xml";
+            LoadFile(item, file); // load last data
+        }
+
         public void LoadAll()
         {
             _items.Clear();

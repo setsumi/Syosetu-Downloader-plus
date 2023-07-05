@@ -21,6 +21,7 @@ namespace syosetuDownloader
         {
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += new UnhandledExceptionEventHandler(MyHandler);
+            System.Windows.Forms.Application.EnableVisualStyles();
 
             base.OnStartup(e);
         }

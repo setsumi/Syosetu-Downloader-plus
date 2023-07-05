@@ -242,7 +242,6 @@ namespace syosetuDownloader
 
             // set up download progress gui-controls
             Label lb = _controls.Last().Label;
-            lb.Content = Syousetsu.Methods.FormatValidFileName(Syousetsu.Methods.GetTitle(toc, sc));
             lb.Background = Brushes.Transparent;
             lb.ToolTip = "Click to open folder";
 
@@ -253,13 +252,25 @@ namespace syosetuDownloader
             _start = (_start == String.Empty) ? "1" : _start;
             _end = pb.Maximum.ToString();
 
-            sc.SeriesTitle = lb.Content.ToString();
             sc.Link = _link;
             sc.Start = _start;
             sc.End = _end;
             sc.CurrentFileType = _fileType;
             sc.SeriesCode = Syousetsu.Methods.GetSeriesCode(_link);
             sc.FilenameFormat = _format;
+
+            // get novel title (also folder) from history
+            string title;
+            var item = new Syousetsu.History.Item();
+            Syousetsu.History.LoadNovel(item, sc);
+            if (!string.IsNullOrEmpty(item.Title))
+                title = item.Title;
+            else
+                title = Syousetsu.Methods.FormatValidFileName(Syousetsu.Methods.GetTitle(toc, sc));
+            // set title
+            lb.Content = title;
+            sc.SeriesTitle = title;
+
             Syousetsu.Methods.GetAllChapterTitles(sc, toc);
 
             if (chkList.IsChecked == true)
@@ -351,6 +362,7 @@ namespace syosetuDownloader
         private void btnHistory_Click(object sender, RoutedEventArgs e)
         {
             HistoryWindow win = new HistoryWindow();
+            win.DownloadFolder = _dl_dir;
             win.ShowDialog();
         }
 

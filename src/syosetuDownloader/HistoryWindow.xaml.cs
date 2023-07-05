@@ -2,6 +2,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,6 +18,8 @@ namespace syosetuDownloader
     /// </summary>
     public partial class HistoryWindow : Window
     {
+        public string DownloadFolder { get; set; }
+
         int _taskNumber = 0;
         MainWindow _parent;
 
@@ -158,6 +161,31 @@ namespace syosetuDownloader
                 Updating = false;
         }
 
+        private void RenameCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            var item = GetCurrentItem();
+            var form = new RenameForm();
+            form.textBox1.Text = item.Title;
+            form.textBox2.Text = item.Title;
+            form.DlFolder = DownloadFolder;
+            form.ValidateInput();
+            if (form.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                item.Title = form.textBox2.Text;
+                Syousetsu.History.SaveItem(item);
+
+                if (Directory.Exists(form.CurrNovelFolder))
+                {
+                    Directory.Move(form.CurrNovelFolder, form.textBox3.Text);
+                }
+
+                ICollectionView view = CollectionViewSource.GetDefaultView(viewHistoryList.ItemsSource);
+                view.Refresh();
+                FocusListView();
+            }
+            form.Dispose();
+        }
+
         private void RemoveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             foreach (Syousetsu.History.Item item in viewHistoryList.SelectedItems.Cast<Syousetsu.History.Item>().ToList())
@@ -251,7 +279,6 @@ namespace syosetuDownloader
                 typeof(CustomCommands),
                 new InputGestureCollection() { new KeyGesture(Key.F2, ModifierKeys.None) }
             );
-
         public static readonly RoutedUICommand Update = new RoutedUICommand
             (
                 "Update",
@@ -259,7 +286,13 @@ namespace syosetuDownloader
                 typeof(CustomCommands),
                 new InputGestureCollection() { new KeyGesture(Key.F5, ModifierKeys.None) }
             );
-
+        public static readonly RoutedUICommand Rename = new RoutedUICommand
+            (
+                "Rename",
+                "Rename",
+                typeof(CustomCommands),
+                new InputGestureCollection() { new KeyGesture(Key.F6, ModifierKeys.None) }
+            );
         public static readonly RoutedUICommand Remove = new RoutedUICommand
             (
                 "Remove",
