@@ -171,12 +171,20 @@ namespace syosetuDownloader
             form.ValidateInput();
             if (form.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                item.Title = form.textBox2.Text;
-                Syousetsu.History.SaveItem(item);
-
+                bool error = false;
                 if (Directory.Exists(form.CurrNovelFolder))
                 {
-                    Directory.Move(form.CurrNovelFolder, form.textBox3.Text);
+                    try { Directory.Move(form.CurrNovelFolder, form.textBox3.Text); }
+                    catch (Exception ex)
+                    {
+                        error = true;
+                        MessageBox.Show(ex.Message, "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                if (!error)
+                {
+                    item.Title = form.textBox2.Text;
+                    Syousetsu.History.SaveItem(item);
                 }
 
                 ICollectionView view = CollectionViewSource.GetDefaultView(viewHistoryList.ItemsSource);
