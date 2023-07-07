@@ -27,17 +27,19 @@
         <CommandBinding Command="local:CustomCommands.Remove" Executed="RemoveCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
         <CommandBinding Command="local:CustomCommands.Select" Executed="SelectCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
         <CommandBinding Command="local:CustomCommands.Web" Executed="WebCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
+        <CommandBinding Command="local:CustomCommands.Batch" Executed="BatchCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
         <CommandBinding Command="local:CustomCommands.Close" Executed="CloseCommand_Executed"/>
         <CommandBinding Command="local:CustomCommands.Finished" Executed="FinishedCommand_Executed" CanExecute="FavoriteCommand_CanExecute"/>
     </Window.CommandBindings>
     <Grid>
-        <Button Content="Favorite" HorizontalAlignment="Center" Margin="-355,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Favorite" ToolTip="Toggle Favorite (F2)"/>
-        <Button Content="Update" HorizontalAlignment="Center" Margin="-245,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Update" ToolTip="Check for Updates (F5)"/>
-        <Button Content="Rename" HorizontalAlignment="Center" Margin="-135,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Rename" ToolTip="Change novel title (also download folder) (F6)"/>
-        <Button Content="Delete" HorizontalAlignment="Center" Margin="-25,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Remove" ToolTip="Remove history item to Recycle Bin (F8)"/>
-        <Button Content="Finished" HorizontalAlignment="Center" Margin="85,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Finished" ToolTip="Toggle Finished (F10)"/>
-        <Button Content="Select" HorizontalAlignment="Center" Margin="195,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Select" ToolTip="Choose to Download (Enter)"/>
-        <Button Content="Web" HorizontalAlignment="Center" Margin="305,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Web" ToolTip="Open Web Site (Ctrl+Enter)"/>
+        <Button Content="Favorite" HorizontalAlignment="Center" Margin="-385,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Favorite" ToolTip="Toggle Favorite (F2)"/>
+        <Button Content="Update" HorizontalAlignment="Center" Margin="-275,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Update" ToolTip="Check for Updates (F5)"/>
+        <Button Content="Rename" HorizontalAlignment="Center" Margin="-165,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Rename" ToolTip="Rename novel title (also download folder) (F6)"/>
+        <Button Content="Delete" HorizontalAlignment="Center" Margin="-55,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Remove" ToolTip="Remove history item to Recycle Bin (F8)"/>
+        <Button Content="Finished" HorizontalAlignment="Center" Margin="55,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Finished" ToolTip="Toggle Finished (F10)"/>
+        <Button Content="Select" HorizontalAlignment="Center" Margin="165,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Select" ToolTip="Choose to Download (Enter)"/>
+        <Button Content="Batch" HorizontalAlignment="Center" Margin="275,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Batch" ToolTip="Automatic Batch Download (Alt+Enter)"/>
+        <Button Content="Web" HorizontalAlignment="Center" Margin="385,0,0,0" VerticalAlignment="Top" Width="50" Height="23" HorizontalContentAlignment="Center" Command="local:CustomCommands.Web" ToolTip="Open Web Site (Ctrl+Enter)"/>
         <ListView x:Name="viewHistoryList" FontSize="13"
           Background="Transparent"
           IsSynchronizedWithCurrentItem="True"

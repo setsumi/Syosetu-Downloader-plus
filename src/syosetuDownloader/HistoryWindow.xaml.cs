@@ -202,20 +202,27 @@ namespace syosetuDownloader
                 Syousetsu.History.DeleteItemFile(item);
             }
             FocusListView();
-            //var item = GetCurrentItem();
-            //(viewHistoryList.ItemsSource as ObservableCollection<Syousetsu.History.Item>).Remove(item);
-            //Syousetsu.History.DeleteItemFile(item);
         }
 
         private void SelectCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             var item = GetCurrentItem();
-            //MainWindow parent = (MainWindow)Application.Current.MainWindow;
             _parent.txtLink.Text = item.Link;
             int from = item.Downloaded;
             _parent.txtFrom.Text = (from > item.Total ? item.Total : from).ToString();
             _parent.txtTo.Text = "";
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => _parent.btnDownload.Focus()));
+            this.Close();
+        }
+
+        private void BatchCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            if (viewHistoryList.SelectedItems.Count > 1)
+                _parent.BatchDownloadAsync(viewHistoryList.SelectedItems.Cast<Syousetsu.History.Item>().ToList());
+            else
+                _parent.BatchDownloadAsync(viewHistoryList.Items.Cast<Syousetsu.History.Item>().ToList());
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             this.Close();
         }
 
@@ -314,6 +321,13 @@ namespace syosetuDownloader
                 "Select",
                 typeof(CustomCommands),
                 new InputGestureCollection() { new KeyGesture(Key.Enter, ModifierKeys.None) }
+            );
+        public static readonly RoutedUICommand Batch = new RoutedUICommand
+            (
+                "Batch",
+                "Batch",
+                typeof(CustomCommands),
+                new InputGestureCollection() { new KeyGesture(Key.Enter, ModifierKeys.Alt) }
             );
         public static readonly RoutedUICommand Web = new RoutedUICommand
             (

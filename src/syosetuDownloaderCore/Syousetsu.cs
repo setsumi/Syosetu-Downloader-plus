@@ -15,6 +15,8 @@ namespace Syousetsu
 {
     public class Methods
     {
+        public static readonly AutoResetEvent _dlJobEvent = new AutoResetEvent(false);
+
         public static CancellationTokenSource AddDownloadJob(Syousetsu.Constants details, ProgressBar pb, Label lb)
         {
             var taskbar = Microsoft.WindowsAPICodePack.Taskbar.TaskbarManager.Instance;
@@ -91,6 +93,7 @@ namespace Syousetsu
                         lb.Content = "finished - " + lb.Content;
                         //lb.Background = Brushes.Aquamarine;
                     }
+                    _dlJobEvent.Set(); // signal to dl queue that this job is done
 
                 }));
             }, ct.Token).ContinueWith(t =>

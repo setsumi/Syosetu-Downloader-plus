@@ -13,6 +13,8 @@ using System.Windows.Threading;
 using System.Xml.Linq;
 using System.Xml;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace syosetuDownloader
 {
@@ -28,11 +30,13 @@ namespace syosetuDownloader
         string _format = String.Empty;
         Syousetsu.Constants.FileType _fileType;
         List<Syousetsu.Controls> _controls = new List<Syousetsu.Controls>();
+        CancellationTokenSource _batchCancel;
+        static readonly Random _random = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
 
         Shell32.Shell _shell;
         string _exe_dir;
         string _dl_dir;
-        readonly string _version = "2.4.0 plus 20";
+        readonly string _version = "2.4.0 plus 21";
 
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
@@ -141,6 +145,105 @@ namespace syosetuDownloader
             }
         }
 
+        public class BatchBackgroundQueue
+        {
+            private Task previousTask = Task.FromResult(true);
+            private object key = new object();
+
+            private readonly MainWindow _window;
+            private int _count = 0;
+            public int Count
+            {
+                get { return _count; }
+                set
+                {
+                    _count = value;
+                    _window.Dispatcher.Invoke(new Action(() => _window.btnQueue.Content = $"Queue {Count}"));
+                }
+            }
+
+            public BatchBackgroundQueue(MainWindow window) { _window = window; }
+
+            public Task QueueTask(Action action, CancellationToken ct)
+            {
+                lock (key)
+                {
+                    Count++;
+                    previousTask = previousTask.ContinueWith(
+                      t => { if (!ct.IsCancellationRequested) action(); Count--; },
+                      ct,
+                      TaskContinuationOptions.None,
+                      TaskScheduler.Default);
+                    return previousTask;
+                }
+            }
+
+            public Task<T> QueueTask<T>(Func<T> work)
+            {
+                lock (key)
+                {
+                    var task = previousTask.ContinueWith(
+                      t => work(),
+                      CancellationToken.None,
+                      TaskContinuationOptions.None,
+                      TaskScheduler.Default);
+                    previousTask = task;
+                    return task;
+                }
+            }
+        }
+
+        private void btnQueue_Click(object sender, RoutedEventArgs e)
+        {
+            btnQueue.IsEnabled = false;
+            _batchCancel.Cancel();
+        }
+
+        public async Task BatchDownloadAsync(List<Syousetsu.History.Item> items)
+        {
+            btnQueue.IsEnabled = true;
+            btnQueue.Content = "Queue";
+            btnQueue.Visibility = Visibility.Visible;
+            btnHistory.IsEnabled = false;
+
+            _batchCancel = new CancellationTokenSource();
+            var queue = new BatchBackgroundQueue(this);
+            int count = 0;
+            foreach (var item in items)
+            {
+                if (item.Finished || item.Downloaded >= item.Total) continue;
+                count++;
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                queue.QueueTask(() =>
+                {
+                    Syousetsu.Methods._dlJobEvent.Reset();
+
+                    int from = item.Downloaded;
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        DownloadBegin(item.Link, (from > item.Total ? item.Total : from).ToString(), "");
+                    }, DispatcherPriority.Normal);
+
+                    Syousetsu.Methods._dlJobEvent.WaitOne();
+                    Thread.Sleep(_random.Next(100, 1001));
+                    //System.Media.SystemSounds.Beep.Play();
+                }, _batchCancel.Token);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            }
+            _ = await queue.QueueTask(() => { return 0; });
+
+            if (count == 0) MessageBox.Show("Nothing to download.\nCheck for updates first.", this.Title, MessageBoxButton.OK, MessageBoxImage.Information);
+            btnQueue.Visibility = Visibility.Hidden;
+            btnHistory.IsEnabled = true;
+            btnHistory.Focus();
+        }
+
+        private void btnDownload_Click(object sender, RoutedEventArgs e)
+        {
+            btnHistory.Focus();
+            DownloadBegin(txtLink.Text, txtFrom.Text, txtTo.Text);
+        }
+
         private class ProgressMultiValueConverter : System.Windows.Data.IMultiValueConverter
         {
             public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
@@ -155,10 +258,8 @@ namespace syosetuDownloader
             }
         }
         private static Action EmptyDelegate = delegate () { };
-        private void btnDownload_Click(object sender, RoutedEventArgs e)
+        private void DownloadBegin(string link, string start, string end)
         {
-            btnHistory.Focus();
-
             var taskbar = Microsoft.WindowsAPICodePack.Taskbar.TaskbarManager.Instance;
             taskbar.SetProgressState(Microsoft.WindowsAPICodePack.Taskbar.TaskbarProgressBarState.Indeterminate);
 
@@ -195,17 +296,15 @@ namespace syosetuDownloader
             scrollViewer1.ScrollToBottom();
             scrollViewer1.Dispatcher.Invoke(DispatcherPriority.Render, EmptyDelegate);
 
-            Application.Current.Dispatcher.InvokeAsync(() =>
-            {
-                try { Download(); }
-                catch (Exception ex) { Syousetsu.Methods.Error(ex); }
-            }, DispatcherPriority.Background);
+            try { Download(link, start, end); }
+            catch (Exception ex) { Syousetsu.Methods.Error(ex); }
         }
-        private void Download()
+
+        private void Download(string link, string start, string end)
         {
-            this._link = txtLink.Text;
-            this._start = txtFrom.Text;
-            this._end = txtTo.Text;
+            this._link = link;
+            this._start = start;
+            this._end = end;
 
             bool fromToValid = (System.Text.RegularExpressions.Regex.IsMatch(_start, @"^\d+$") || _start.Equals(String.Empty)) &&
                 (System.Text.RegularExpressions.Regex.IsMatch(_end, @"^\d+$") || _end.Equals(String.Empty));
@@ -334,6 +433,7 @@ namespace syosetuDownloader
             //    textBox.SelectionStart = textBox.Text.Length;
             //}
 
+            btnQueue.Visibility = Visibility.Hidden;
             LoadConfig();
             PopulateNovelsURLs(txtLink);
             PopulateSiteLinks(cbSite);
