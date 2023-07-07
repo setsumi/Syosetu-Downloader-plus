@@ -2,6 +2,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -248,6 +249,17 @@ namespace syosetuDownloader
             }
         }
 
+        private void FolderCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            var item = GetCurrentItem();
+            var psi = new ProcessStartInfo
+            {
+                FileName = DownloadFolder + Path.DirectorySeparatorChar + item.Title,
+                UseShellExecute = true
+            };
+            Process.Start(psi);
+        }
+
         //private void OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         //{
         //    Point point = Mouse.GetPosition(viewHistoryList);
@@ -349,6 +361,13 @@ namespace syosetuDownloader
                 "Finished",
                 typeof(CustomCommands),
                 new InputGestureCollection() { new KeyGesture(Key.F10, ModifierKeys.None) }
+            );
+        public static readonly RoutedUICommand Folder = new RoutedUICommand
+            (
+                "Folder",
+                "Folder",
+                typeof(CustomCommands),
+                new InputGestureCollection() { new KeyGesture(Key.F12, ModifierKeys.None) }
             );
     }
 
