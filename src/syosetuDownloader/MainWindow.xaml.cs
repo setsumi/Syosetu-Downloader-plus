@@ -15,6 +15,7 @@ using System.Xml;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System.Threading.Tasks;
 using System.Threading;
+using WindowsInput;
 
 namespace syosetuDownloader
 {
@@ -36,7 +37,7 @@ namespace syosetuDownloader
         Shell32.Shell _shell;
         string _exe_dir;
         string _dl_dir;
-        readonly string _version = "2.4.0 plus 21";
+        readonly string _version = "2.4.0 plus 22";
 
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
@@ -441,6 +442,11 @@ namespace syosetuDownloader
 
             // focus history button
             btnHistory.Focus();
+
+            // force keyboard focus caret to appear
+            InputSimulator sim = new InputSimulator();
+            sim.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.MENU);
+            sim.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.MENU);
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
