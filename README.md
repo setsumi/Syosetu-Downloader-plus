@@ -3,7 +3,7 @@ Download chapters from Syosetsu ni Narou and Kakuyomu
 
 **[Download Here](https://github.com/setsumi/Syosetu-Downloader-plus/releases/)**
 
-**Changes**
+**Additions**
 - HTML titles
 - TOC: Series name, novel name, author name
 - Kakuyomu support
