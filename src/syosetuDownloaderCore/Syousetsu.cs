@@ -16,6 +16,22 @@ namespace Syousetsu
     public class Methods
     {
         public static readonly AutoResetEvent _dlJobEvent = new AutoResetEvent(false);
+        public static CancellationTokenSource _batchCancel = null;
+        private static syosetuDownloaderCore.MessageForm _messageForm = null;
+
+        public static void Error(Exception ex, string prefix = "")
+        {
+            _batchCancel?.Cancel(); // stop dl batch
+            _dlJobEvent.Set();      // stop current dl task originated from batch
+
+            System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                if (_messageForm == null) _messageForm = new syosetuDownloaderCore.MessageForm();
+
+                prefix = string.IsNullOrEmpty(prefix) ? "  " : $"  {prefix}  ";
+                _messageForm.Error($"{DateTime.Now}{prefix}ErrorType = {ex.GetType()};  ErrorMessage = {ex.Message}");
+            }, System.Windows.Threading.DispatcherPriority.Normal);
+        }
 
         public static CancellationTokenSource AddDownloadJob(Syousetsu.Constants details, ProgressBar pb, Label lb)
         {
@@ -103,18 +119,6 @@ namespace Syousetsu
             }, TaskContinuationOptions.OnlyOnFaulted);
 
             return ct;
-        }
-
-        private static syosetuDownloaderCore.MessageForm _messageForm = null;
-        public static void Error(Exception ex, string prefix = "")
-        {
-            System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-            {
-                if (_messageForm == null) _messageForm = new syosetuDownloaderCore.MessageForm();
-
-                prefix = string.IsNullOrEmpty(prefix) ? "  " : $"  {prefix}  ";
-                _messageForm.Error($"{DateTime.Now}{prefix}ErrorType = {ex.GetType()};  ErrorMessage = {ex.Message}");
-            }, System.Windows.Threading.DispatcherPriority.Normal);
         }
 
         public static HtmlDocument GetTableOfContents(string link, Constants details)

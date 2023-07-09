@@ -31,7 +31,6 @@ namespace syosetuDownloader
         string _format = String.Empty;
         Syousetsu.Constants.FileType _fileType;
         List<Syousetsu.Controls> _controls = new List<Syousetsu.Controls>();
-        CancellationTokenSource _batchCancel;
         static readonly Random _random = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
 
         Shell32.Shell _shell;
@@ -197,7 +196,7 @@ namespace syosetuDownloader
         private void btnQueue_Click(object sender, RoutedEventArgs e)
         {
             btnQueue.IsEnabled = false;
-            _batchCancel.Cancel();
+            Syousetsu.Methods._batchCancel.Cancel();
         }
 
         public async Task BatchDownloadAsync(List<Syousetsu.History.Item> items)
@@ -207,7 +206,7 @@ namespace syosetuDownloader
             btnQueue.Visibility = Visibility.Visible;
             btnHistory.IsEnabled = false;
 
-            _batchCancel = new CancellationTokenSource();
+            Syousetsu.Methods._batchCancel = new CancellationTokenSource();
             var queue = new BatchBackgroundQueue(this);
             int count = 0;
             foreach (var item in items)
@@ -228,7 +227,7 @@ namespace syosetuDownloader
                     Syousetsu.Methods._dlJobEvent.WaitOne();
                     Thread.Sleep(_random.Next(100, 1001));
                     //System.Media.SystemSounds.Beep.Play();
-                }, _batchCancel.Token);
+                }, Syousetsu.Methods._batchCancel.Token);
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             }
             _ = await queue.QueueTask(() => { return 0; });
