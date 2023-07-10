@@ -19,24 +19,53 @@ using WindowsInput;
 
 namespace syosetuDownloader
 {
+    public static class Tools
+    {
+        public static void ThreadMessageBoxError(string message)
+        {
+            Application.Current.Dispatcher.InvokeAsync(new Action(() =>
+            {
+                MessageBox.Show(message, "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
+            }));
+        }
+    }
+
+    public static class DlOptions
+    {
+        private static readonly object obj = new object();
+
+        private static string _exe_dir = "";
+        private static string _dl_dir = "";
+        private static string _format = "";
+        private static Syousetsu.Constants.FileType _file_type = Syousetsu.Constants.FileType.HTML;
+        private static bool _generate_toc = true;
+
+        private static string _link = "";
+        private static string _start = "";
+        private static string _end = "";
+
+        public static string ExeDir { get { lock (obj) { return _exe_dir; } } set { lock (obj) { _exe_dir = value; } } }
+        public static string DlDir { get { lock (obj) { return _dl_dir; } } set { lock (obj) { _dl_dir = value; } } }
+        public static string Format { get { lock (obj) { return _format; } } set { lock (obj) { _format = value; } } }
+        public static Syousetsu.Constants.FileType FileType { get { lock (obj) { return _file_type; } } set { lock (obj) { _file_type = value; } } }
+        public static bool GenerateTOC { get { lock (obj) { return _generate_toc; } } set { lock (obj) { _generate_toc = value; } } }
+
+        public static string Link { get { lock (obj) { return _link; } } set { lock (obj) { _link = value; } } }
+        public static string Start { get { lock (obj) { return _start; } } set { lock (obj) { _start = value; } } }
+        public static string End { get { lock (obj) { return _end; } } set { lock (obj) { _end = value; } } }
+    }
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
         int _row = 0;
-        string _link = String.Empty;
-        string _start = String.Empty;
-        string _end = String.Empty;
-        string _format = String.Empty;
-        Syousetsu.Constants.FileType _fileType;
         List<Syousetsu.Controls> _controls = new List<Syousetsu.Controls>();
         static readonly Random _random = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
 
-        Shell32.Shell _shell;
-        string _exe_dir;
-        string _dl_dir;
         readonly string _version = "2.4.0 plus 22";
+        readonly Shell32.Shell _shell;
 
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
 
@@ -64,9 +93,10 @@ namespace syosetuDownloader
                 | (SecurityProtocolType)3072
                 | (SecurityProtocolType)12288;
 
-            _exe_dir = System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-            _dl_dir = _exe_dir;
             _shell = new Shell32.Shell();
+            DlOptions.ExeDir = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            DlOptions.DlDir = DlOptions.ExeDir;
+            DlOptions.Format = GetFilenameFormat();
 
             this.Title += _version;
             txtLink.ToolTip = "(Alt+↓)  dropdown list, populated from (.url) web shortcuts"
@@ -80,9 +110,9 @@ namespace syosetuDownloader
             List<NovelDrop> items = new List<NovelDrop>();
 
             // Get the shortcut's folder.
-            Shell32.Folder shortcut_folder = _shell.NameSpace(_dl_dir);
+            Shell32.Folder shortcut_folder = _shell.NameSpace(DlOptions.DlDir);
 
-            string[] fileEntries = Directory.GetFiles(_dl_dir);
+            string[] fileEntries = Directory.GetFiles(DlOptions.DlDir);
             foreach (string file in fileEntries)
             {
                 if (Path.GetExtension(file).Equals(".url", StringComparison.OrdinalIgnoreCase))
@@ -105,7 +135,7 @@ namespace syosetuDownloader
             {
                 int odd = 1;
                 SiteLink link = null;
-                string input = File.ReadAllText(_exe_dir + "\\website.txt");
+                string input = File.ReadAllText(Path.Combine(DlOptions.ExeDir, "website.txt"));
                 StringReader reader = new StringReader(input);
                 string line = string.Empty;
                 do
@@ -129,8 +159,9 @@ namespace syosetuDownloader
             cb.ItemsSource = items;
         }
 
-        public void GetFilenameFormat()
+        public string GetFilenameFormat()
         {
+            string format = "";
             using (System.IO.StreamReader sr = new System.IO.StreamReader("format.ini"))
             {
                 string line;
@@ -138,11 +169,12 @@ namespace syosetuDownloader
                 {
                     if (!line.StartsWith(";"))
                     {
-                        _format = line;
+                        format = line;
                         break;
                     }
                 }
             }
+            return format;
         }
 
         public class BatchBackgroundQueue
@@ -158,7 +190,7 @@ namespace syosetuDownloader
                 set
                 {
                     _count = value;
-                    _window.Dispatcher.Invoke(new Action(() => _window.btnQueue.Content = $"Queue {Count}"));
+                    _window.Dispatcher.Invoke(() => _window.btnQueue.Content = $"Queue {Count}");
                 }
             }
 
@@ -217,14 +249,9 @@ namespace syosetuDownloader
                 queue.QueueTask(() =>
                 {
                     Syousetsu.Methods._dlJobEvent.Reset();
-
-                    int from = item.Downloaded;
-                    Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
-                        DownloadBegin(item.Link, (from > item.Total ? item.Total : from).ToString(), "");
-                    }, DispatcherPriority.Normal);
-
+                    DownloadBegin(item.Link, item.Downloaded.ToString(), "");
                     Syousetsu.Methods._dlJobEvent.WaitOne();
+
                     Thread.Sleep(_random.Next(100, 1001));
                     //System.Media.SystemSounds.Beep.Play();
                 }, Syousetsu.Methods._batchCancel.Token);
@@ -241,7 +268,11 @@ namespace syosetuDownloader
         private void btnDownload_Click(object sender, RoutedEventArgs e)
         {
             btnHistory.Focus();
-            DownloadBegin(txtLink.Text, txtFrom.Text, txtTo.Text);
+
+            string link = txtLink.Text;
+            string from = txtFrom.Text;
+            string to = txtTo.Text;
+            Task.Run(() => DownloadBegin(link, from, to));
         }
 
         private class ProgressMultiValueConverter : System.Windows.Data.IMultiValueConverter
@@ -260,153 +291,167 @@ namespace syosetuDownloader
         private static Action EmptyDelegate = delegate () { };
         private void DownloadBegin(string link, string start, string end)
         {
-            var taskbar = Microsoft.WindowsAPICodePack.Taskbar.TaskbarManager.Instance;
-            taskbar.SetProgressState(Microsoft.WindowsAPICodePack.Taskbar.TaskbarProgressBarState.Indeterminate);
+            DlOptions.Link = link;
+            DlOptions.Start = start;
+            DlOptions.End = end;
 
-            Label lb = new Label();
-            lb.Content = "Preparing...";
-            lb.Background = Brushes.Gold;
+            this.Dispatcher.Invoke(() =>
+            {
+                var taskbar = Microsoft.WindowsAPICodePack.Taskbar.TaskbarManager.Instance;
+                taskbar.SetProgressState(Microsoft.WindowsAPICodePack.Taskbar.TaskbarProgressBarState.Indeterminate);
 
-            ProgressBar pb = new ProgressBar();
-            pb.Height = 15;
-            pb.Tag = 0;
+                Label lb = new Label();
+                lb.Content = "Preparing...";
+                lb.Background = Brushes.Gold;
 
-            TextBlock tb = new TextBlock();
-            var binding = new System.Windows.Data.MultiBinding();
-            binding.Bindings.Add(new System.Windows.Data.Binding("Value") { Source = pb });
-            binding.Bindings.Add(new System.Windows.Data.Binding("ToolTip") { Source = pb });
-            binding.Converter = new ProgressMultiValueConverter();
-            tb.SetBinding(TextBlock.TextProperty, binding);
-            tb.HorizontalAlignment = HorizontalAlignment.Center;
-            tb.VerticalAlignment = VerticalAlignment.Center;
-            tb.Margin = new Thickness(0, -pb.Height, 0, 0);
-            tb.IsHitTestVisible = false;
+                ProgressBar pb = new ProgressBar();
+                pb.Height = 15;
+                pb.Tag = 0;
 
-            Separator s = new Separator();
-            s.Height = 5;
+                TextBlock tb = new TextBlock();
+                var binding = new System.Windows.Data.MultiBinding();
+                binding.Bindings.Add(new System.Windows.Data.Binding("Value") { Source = pb });
+                binding.Bindings.Add(new System.Windows.Data.Binding("ToolTip") { Source = pb });
+                binding.Converter = new ProgressMultiValueConverter();
+                tb.SetBinding(TextBlock.TextProperty, binding);
+                tb.HorizontalAlignment = HorizontalAlignment.Center;
+                tb.VerticalAlignment = VerticalAlignment.Center;
+                tb.Margin = new Thickness(0, -pb.Height, 0, 0);
+                tb.IsHitTestVisible = false;
 
-            _row += 1;
-            _controls.Add(new Syousetsu.Controls { ID = _row, Label = lb, ProgressBar = pb, Separator = s });
+                Separator s = new Separator();
+                s.Height = 5;
 
-            stackPanel1.Children.Add(lb);
-            stackPanel1.Children.Add(pb);
-            stackPanel1.Children.Add(tb);
-            stackPanel1.Children.Add(s);
-            scrollViewer1.ScrollToLeftEnd();
-            scrollViewer1.ScrollToBottom();
-            scrollViewer1.Dispatcher.Invoke(DispatcherPriority.Render, EmptyDelegate);
+                _row += 1;
+                _controls.Add(new Syousetsu.Controls { ID = _row, Label = lb, ProgressBar = pb, TextBlock = tb, Separator = s });
 
-            try { Download(link, start, end); }
+                stackPanel1.Children.Add(lb);
+                stackPanel1.Children.Add(pb);
+                stackPanel1.Children.Add(tb);
+                stackPanel1.Children.Add(s);
+                scrollViewer1.ScrollToLeftEnd();
+                scrollViewer1.ScrollToBottom();
+                scrollViewer1.Dispatcher.Invoke(DispatcherPriority.Render, EmptyDelegate);
+            });
+
+            try { Download(); }
             catch (Exception ex) { Syousetsu.Methods.Error(ex); }
         }
 
-        private void Download(string link, string start, string end)
+        private void Download()
         {
-            this._link = link;
-            this._start = start;
-            this._end = end;
+            bool fromToValid = (System.Text.RegularExpressions.Regex.IsMatch(DlOptions.Start, @"^\d+$") || DlOptions.Start.Equals(String.Empty)) &&
+                (System.Text.RegularExpressions.Regex.IsMatch(DlOptions.End, @"^\d+$") || DlOptions.End.Equals(String.Empty));
 
-            bool fromToValid = (System.Text.RegularExpressions.Regex.IsMatch(_start, @"^\d+$") || _start.Equals(String.Empty)) &&
-                (System.Text.RegularExpressions.Regex.IsMatch(_end, @"^\d+$") || _end.Equals(String.Empty));
-
-            if (String.IsNullOrWhiteSpace(_link) && fromToValid)
+            if (String.IsNullOrWhiteSpace(DlOptions.Link) && fromToValid)
             {
-                MessageBox.Show("Error parsing link and/or chapter range.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Tools.ThreadMessageBoxError("Error parsing link and/or chapter range.");
                 return;
             }
 
-            if (!_link.StartsWith("http")) { _link = @"http://" + _link; }
+            if (!DlOptions.Link.StartsWith("http")) { DlOptions.Link = @"http://" + DlOptions.Link; }
 
-            if (Syousetsu.Constants.Site(_link) == Syousetsu.Constants.SiteType.Syousetsu) // syousetsu
-                if (!_link.EndsWith("/")) { _link += "/"; }
+            if (Syousetsu.Constants.Site(DlOptions.Link) == Syousetsu.Constants.SiteType.Syousetsu) // syousetsu
+                if (!DlOptions.Link.EndsWith("/")) { DlOptions.Link += "/"; }
 
-            if (!Syousetsu.Methods.IsValidLink(_link))
+            if (!Syousetsu.Methods.IsValidLink(DlOptions.Link))
             {
-                MessageBox.Show("Link is not valid.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Tools.ThreadMessageBoxError("Link is not valid.");
                 return;
             }
 
-            Syousetsu.Constants sc = new Syousetsu.Constants(_link, _exe_dir, _dl_dir);
+            Syousetsu.Constants sc = new Syousetsu.Constants(DlOptions.Link, DlOptions.ExeDir, DlOptions.DlDir);
             sc.AddChapter("", ""); // start chapters from 1
-            HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(_link, sc);
+            HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(DlOptions.Link, sc);
 
             if (!Syousetsu.Methods.IsValid(toc, sc))
             {
-                MessageBox.Show("Link is not valid.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Tools.ThreadMessageBoxError("Link is not valid.");
                 return;
             }
 
+            this.Dispatcher.Invoke(() =>
+            {
+                // set up download progress gui-controls
+                Label lb = _controls.Last().Label;
+                lb.Background = Brushes.Transparent;
+                lb.ToolTip = "Click to open folder";
 
-            GetFilenameFormat();
+                ProgressBar pb = _controls.Last().ProgressBar;
+                pb.Maximum = string.IsNullOrWhiteSpace(DlOptions.End) ? Syousetsu.Methods.GetTotalChapters(toc, sc) : Convert.ToDouble(DlOptions.End);
+                if (DlOptions.GenerateTOC) pb.ToolTip = "Getting Chapter List";
 
-            // set up download progress gui-controls
-            Label lb = _controls.Last().Label;
-            lb.Background = Brushes.Transparent;
-            lb.ToolTip = "Click to open folder";
+                DlOptions.Start = string.IsNullOrWhiteSpace(DlOptions.Start) ? "1" : DlOptions.Start;
+                DlOptions.End = pb.Maximum.ToString();
 
-            ProgressBar pb = _controls.Last().ProgressBar;
-            pb.Maximum = (_end == String.Empty) ? Syousetsu.Methods.GetTotalChapters(toc, sc) : Convert.ToDouble(_end);
-            pb.ToolTip = "Click to stop download";
+                sc.Link = DlOptions.Link;
+                sc.Start = DlOptions.Start;
+                sc.End = DlOptions.End;
+                sc.CurrentFileType = DlOptions.FileType;
+                sc.SeriesCode = Syousetsu.Methods.GetSeriesCode(DlOptions.Link);
+                sc.FilenameFormat = DlOptions.Format;
 
-            _start = (_start == String.Empty) ? "1" : _start;
-            _end = pb.Maximum.ToString();
+                // get novel title (also folder) from history
+                string title;
+                var item = new Syousetsu.History.Item();
+                Syousetsu.History.LoadNovel(item, sc);
+                if (!string.IsNullOrEmpty(item.Title))
+                    title = item.Title;
+                else
+                    title = Syousetsu.Methods.FormatValidFileName(Syousetsu.Methods.GetTitle(toc, sc));
+                // set title
+                lb.Content = title;
+                sc.SeriesTitle = title;
 
-            sc.Link = _link;
-            sc.Start = _start;
-            sc.End = _end;
-            sc.CurrentFileType = _fileType;
-            sc.SeriesCode = Syousetsu.Methods.GetSeriesCode(_link);
-            sc.FilenameFormat = _format;
+                Syousetsu.Methods.GetAllChapterTitles(sc, toc);
+            });
 
-            // get novel title (also folder) from history
-            string title;
-            var item = new Syousetsu.History.Item();
-            Syousetsu.History.LoadNovel(item, sc);
-            if (!string.IsNullOrEmpty(item.Title))
-                title = item.Title;
-            else
-                title = Syousetsu.Methods.FormatValidFileName(Syousetsu.Methods.GetTitle(toc, sc));
-            // set title
-            lb.Content = title;
-            sc.SeriesTitle = title;
-
-            Syousetsu.Methods.GetAllChapterTitles(sc, toc);
-
-            if (chkList.IsChecked == true)
+            if (DlOptions.GenerateTOC)
             {
                 Syousetsu.Create.GenerateTableOfContents(sc, toc);
             }
 
-            System.Threading.CancellationTokenSource ct = Syousetsu.Methods.AddDownloadJob(sc, pb, lb);
-            pb.MouseDown += (snt, evt) =>
+            this.Dispatcher.Invoke(() =>
             {
-                ct.Cancel();
-                pb.ToolTip = null;
-            };
-            lb.MouseDown += (snt, evt) =>
-            {
-                //_shell.Explore(Path.Combine(_dl_dir, sc.SeriesTitle));
-                var psi = new ProcessStartInfo
+                Label lb = _controls.Last().Label;
+                ProgressBar pb = _controls.Last().ProgressBar;
+                pb.ToolTip = "Click to stop download";
+                System.Threading.CancellationTokenSource ct = Syousetsu.Methods.AddDownloadJob(sc, pb, lb);
+                pb.MouseDown += (snt, evt) =>
                 {
-                    FileName = Path.Combine(_dl_dir, sc.SeriesTitle),
-                    UseShellExecute = true
+                    ct.Cancel();
+                    pb.ToolTip = null;
                 };
-                Process.Start(psi);
-            };
+                lb.MouseDown += (snt, evt) =>
+                {
+                    //_shell.Explore(Path.Combine(_dl_dir, sc.SeriesTitle));
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = Path.Combine(DlOptions.DlDir, sc.SeriesTitle),
+                        UseShellExecute = true
+                    };
+                    Process.Start(psi);
+                };
 
-            scrollViewer1.ScrollToLeftEnd();
-            scrollViewer1.ScrollToBottom();
-            scrollViewer1.Dispatcher.Invoke(DispatcherPriority.Render, EmptyDelegate);
+                scrollViewer1.ScrollToLeftEnd();
+                scrollViewer1.ScrollToBottom();
+                scrollViewer1.Dispatcher.Invoke(DispatcherPriority.Render, EmptyDelegate);
+            });
         }
 
         private void rbText_Checked(object sender, RoutedEventArgs e)
         {
-            _fileType = Syousetsu.Constants.FileType.Text;
+            DlOptions.FileType = Syousetsu.Constants.FileType.Text;
         }
 
         private void rbHtml_Checked(object sender, RoutedEventArgs e)
         {
-            _fileType = Syousetsu.Constants.FileType.HTML;
+            DlOptions.FileType = Syousetsu.Constants.FileType.HTML;
+        }
+
+        private void chkList_Checked(object sender, RoutedEventArgs e)
+        {
+            DlOptions.GenerateTOC = (bool)chkList.IsChecked;
         }
 
         private void btnDelete_Click(object sender, RoutedEventArgs e)
@@ -415,6 +460,7 @@ namespace syosetuDownloader
             {
                 stackPanel1.Children.Remove(c.Label);
                 stackPanel1.Children.Remove(c.ProgressBar);
+                stackPanel1.Children.Remove(c.TextBlock);
                 stackPanel1.Children.Remove(c.Separator);
             });
 
@@ -458,7 +504,7 @@ namespace syosetuDownloader
             //_shell.Explore(_dl_dir);
             var psi = new ProcessStartInfo
             {
-                FileName = _dl_dir,
+                FileName = DlOptions.DlDir,
                 UseShellExecute = true
             };
             Process.Start(psi);
@@ -467,7 +513,7 @@ namespace syosetuDownloader
         private void btnHistory_Click(object sender, RoutedEventArgs e)
         {
             HistoryWindow win = new HistoryWindow();
-            win.DownloadFolder = _dl_dir;
+            win.DownloadFolder = DlOptions.DlDir;
             win.ShowDialog();
         }
 
@@ -501,7 +547,7 @@ namespace syosetuDownloader
 
         public void LoadConfig()
         {
-            string file = _exe_dir + Path.DirectorySeparatorChar + "config.xml";
+            string file = Path.Combine(DlOptions.ExeDir, "config.xml");
             if (!File.Exists(file)) return;
 
             XElement fileElem = XElement.Load(file);
@@ -514,14 +560,14 @@ namespace syosetuDownloader
             try // newly added stuff
             {
                 elem = fileElem.Element("config");
-                _dl_dir = elem.Attribute("dlfolder").Value;
+                DlOptions.DlDir = elem.Attribute("dlfolder").Value;
             }
             catch { }
         }
 
         public void SaveConfig()
         {
-            string file = _exe_dir + Path.DirectorySeparatorChar + "config.xml";
+            string file = Path.Combine(DlOptions.ExeDir, "config.xml");
 
             XmlDocument doc = new XmlDocument();
             XmlNode docNode = doc.CreateXmlDeclaration("1.0", "UTF-8", null);
@@ -549,7 +595,7 @@ namespace syosetuDownloader
             node = doc.CreateElement("config");
 
             attr = doc.CreateAttribute("dlfolder");
-            attr.Value = _dl_dir;
+            attr.Value = DlOptions.DlDir;
             node.Attributes.Append(attr);
 
             rootNode.AppendChild(node);
@@ -580,12 +626,12 @@ namespace syosetuDownloader
             dialog.IsFolderPicker = true;
             dialog.EnsurePathExists = true;
             dialog.Multiselect = false;
-            dialog.DefaultDirectory = _dl_dir;
-            dialog.InitialDirectory = _dl_dir;
+            dialog.DefaultDirectory = DlOptions.DlDir;
+            dialog.InitialDirectory = DlOptions.DlDir;
             CommonFileDialogResult result = dialog.ShowDialog();
             if (result == CommonFileDialogResult.Ok)
             {
-                _dl_dir = dialog.FileName;
+                DlOptions.DlDir = dialog.FileName;
                 SaveConfig();
             }
         }

@@ -165,11 +165,7 @@ namespace syosetuDownloader
         private void RenameCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             var item = GetCurrentItem();
-            var form = new RenameForm();
-            form.textBox1.Text = item.Title;
-            form.textBox2.Text = item.Title;
-            form.DlFolder = DownloadFolder;
-            form.ValidateInput();
+            var form = new RenameForm(DownloadFolder, item.Title);
             if (form.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 bool error = false;
@@ -254,7 +250,7 @@ namespace syosetuDownloader
             var item = GetCurrentItem();
             var psi = new ProcessStartInfo
             {
-                FileName = DownloadFolder + Path.DirectorySeparatorChar + item.Title,
+                FileName = Path.Combine(DownloadFolder, item.Title),
                 UseShellExecute = true
             };
             Process.Start(psi);

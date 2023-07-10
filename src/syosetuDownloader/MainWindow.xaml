@@ -36,7 +36,7 @@
                 <RadioButton Content="HTML" Height="16" HorizontalAlignment="Right" x:Name="rbHtml" VerticalAlignment="Top" Margin="0,11,50,0" IsChecked="True" Checked="rbHtml_Checked" Grid.Column="1" />
             </Grid>
         </GroupBox>
-        <CheckBox Content="Generate Chapter List" Height="16" HorizontalAlignment="Center" x:Name="chkList" VerticalAlignment="Top" Margin="12,174,12,0" IsChecked="True"/>
+        <CheckBox Content="Generate Chapter List" Height="16" HorizontalAlignment="Center" x:Name="chkList" VerticalAlignment="Top" Margin="12,174,12,0" IsChecked="True" Checked="chkList_Checked" Unchecked="chkList_Checked"/>
         <Button Content="Download" Height="23" HorizontalAlignment="Center" x:Name="btnDownload" VerticalAlignment="Top" Width="108" Margin="12,197,12,0" Click="btnDownload_Click" />
         <Button Content="Queue" Height="23" HorizontalAlignment="Center" x:Name="btnQueue" VerticalAlignment="Top" Width="70" Margin="210,197,12,0" Click="btnQueue_Click" ToolTip="Cancel queue" />
         <Button Content="Delete Completed" HorizontalAlignment="Center" x:Name="btnDelete" Width="104" Margin="12,231,12,0" Click="btnDelete_Click" Height="23" VerticalAlignment="Top" />

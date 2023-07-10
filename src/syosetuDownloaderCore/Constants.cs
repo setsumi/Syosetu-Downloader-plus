@@ -1,12 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows.Controls;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
-using HtmlAgilityPack;
 using System.Net;
 using System.IO;
 using System.Windows;
@@ -18,6 +12,7 @@ namespace Syousetsu
         public int ID { get; set; }
         public Label Label { get; set; }
         public ProgressBar ProgressBar { get; set; }
+        public TextBlock TextBlock { get; set; }
         public Separator Separator { get; set; }
     }
 

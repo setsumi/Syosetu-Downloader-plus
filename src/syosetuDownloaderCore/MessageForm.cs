@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows.Forms;
 
 namespace syosetuDownloaderCore
@@ -30,15 +31,28 @@ namespace syosetuDownloaderCore
 
         private void Message(string message)
         {
-            listboxLog.Items.Add(message);
-            //listboxLog.TopIndex = listboxLog.Items.Count - 1;
-            listboxLog.SelectedIndex = listboxLog.Items.Count - 1;
-
             if (!Visible)
             {
                 Show();
                 BringToFront();
             }
+            // add all lines
+            int count = 0;
+            using (var reader = new StringReader(message))
+                for (string line = reader.ReadLine(); line != null; line = reader.ReadLine())
+                {
+                    count++;
+                    listboxLog.Items.Add(line);
+                }
+            // scroll to bottom
+            listboxLog.SelectionMode = SelectionMode.One;
+            listboxLog.TopIndex = listboxLog.Items.Count - 1;
+            listboxLog.SelectedIndex = listboxLog.Items.Count - 1;
+            listboxLog.SelectionMode = SelectionMode.MultiExtended;
+            // select added lines
+            for (int i = 0; i < listboxLog.Items.Count; i++)
+                if (i >= listboxLog.Items.Count - count)
+                    listboxLog.SetSelected(i, true);
         }
 
         private void MessageForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -53,8 +67,9 @@ namespace syosetuDownloaderCore
             {
                 if (listboxLog.SelectedItems.Count > 0)
                 {
-                    string s = listboxLog.SelectedItem.ToString();
-                    Clipboard.SetData(DataFormats.StringFormat, s);
+                    string s = "";
+                    foreach (var item in listboxLog.SelectedItems) s += item.ToString() + Environment.NewLine;
+                    Clipboard.SetData(DataFormats.StringFormat, s.Trim(Environment.NewLine.ToCharArray()));
                 }
             }
         }

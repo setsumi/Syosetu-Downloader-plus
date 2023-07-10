@@ -28,8 +28,10 @@ namespace Syousetsu
             {
                 if (_messageForm == null) _messageForm = new syosetuDownloaderCore.MessageForm();
 
-                prefix = string.IsNullOrEmpty(prefix) ? "  " : $"  {prefix}  ";
-                _messageForm.Error($"{DateTime.Now}{prefix}ErrorType = {ex.GetType()};  ErrorMessage = {ex.Message}");
+                if (!string.IsNullOrWhiteSpace(prefix))
+                    _messageForm.Error($"{DateTime.Now} {prefix}{Environment.NewLine}{ex.GetType()}: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                else
+                    _messageForm.Error($"{DateTime.Now} {ex.GetType()}: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }, System.Windows.Threading.DispatcherPriority.Normal);
         }
 

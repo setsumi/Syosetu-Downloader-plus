@@ -9,13 +9,17 @@ namespace syosetuDownloader
     public partial class RenameForm : Form
     {
         public string DlFolder { get; set; }
-        public string CurrNovelFolder { get => DlFolder + Path.DirectorySeparatorChar + textBox1.Text; }
+        public string CurrNovelFolder { get => Path.Combine(DlFolder, textBox1.Text); }
 
         List<Char> _invalidChars = new List<Char>() { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
 
-        public RenameForm()
+        public RenameForm(string dlfolder, string title)
         {
             InitializeComponent();
+
+            DlFolder = dlfolder;
+            textBox1.Text = title;
+            textBox2.Text = title;
         }
 
         private void btnOK_Click(object sender, EventArgs e)
@@ -37,7 +41,7 @@ namespace syosetuDownloader
 
         public void ValidateInput()
         {
-            textBox3.Text = DlFolder + Path.DirectorySeparatorChar + textBox2.Text;
+            textBox3.Text = Path.Combine(DlFolder, textBox2.Text);
 
             if (string.IsNullOrEmpty(textBox2.Text))
             {

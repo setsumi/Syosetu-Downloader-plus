@@ -39,7 +39,6 @@
             this.listboxLog.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listboxLog.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.listboxLog.FormattingEnabled = true;
-            this.listboxLog.HorizontalScrollbar = true;
             this.listboxLog.ItemHeight = 16;
             this.listboxLog.Items.AddRange(new object[] {
             "sample 1",
@@ -47,10 +46,20 @@
             "sample 3",
             "sample 4",
             "sample 5",
-            ""});
+            "sample 6",
+            "sample 7",
+            "sample 8",
+            "sample 9",
+            "sample 10",
+            "sample 11",
+            "sample 12",
+            "sample 13",
+            "sample 14",
+            "sample 15"});
             this.listboxLog.Location = new System.Drawing.Point(0, 0);
             this.listboxLog.Name = "listboxLog";
-            this.listboxLog.Size = new System.Drawing.Size(744, 240);
+            this.listboxLog.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
+            this.listboxLog.Size = new System.Drawing.Size(744, 246);
             this.listboxLog.TabIndex = 0;
             // 
             // timerBeep
@@ -62,7 +71,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(744, 240);
+            this.ClientSize = new System.Drawing.Size(744, 246);
             this.Controls.Add(this.listboxLog);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
