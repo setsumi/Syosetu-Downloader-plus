@@ -45,10 +45,9 @@ namespace syosetuDownloaderCore
                     listboxLog.Items.Add(line);
                 }
             // scroll to bottom
-            listboxLog.SelectionMode = SelectionMode.One;
+            listboxLog.ClearSelected();
             listboxLog.TopIndex = listboxLog.Items.Count - 1;
             listboxLog.SelectedIndex = listboxLog.Items.Count - 1;
-            listboxLog.SelectionMode = SelectionMode.MultiExtended;
             // select added lines
             for (int i = 0; i < listboxLog.Items.Count; i++)
                 if (i >= listboxLog.Items.Count - count)

@@ -64,7 +64,7 @@ namespace syosetuDownloader
         List<Syousetsu.Controls> _controls = new List<Syousetsu.Controls>();
         static readonly Random _random = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
 
-        readonly string _version = "2.4.0 plus 22";
+        readonly string _version = "2.4.0 plus 23";
         readonly Shell32.Shell _shell;
 
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
