@@ -63,6 +63,7 @@ namespace syosetuDownloader
         int _row = 0;
         List<Syousetsu.Controls> _controls = new List<Syousetsu.Controls>();
         static readonly Random _random = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
+        static readonly InputSimulator _sim = new InputSimulator();
 
         readonly string _version = "2.4.0 plus 23";
         readonly Shell32.Shell _shell;
@@ -262,12 +263,12 @@ namespace syosetuDownloader
             if (count == 0) MessageBox.Show("Nothing to download.\nCheck for updates first.", this.Title, MessageBoxButton.OK, MessageBoxImage.Information);
             btnQueue.Visibility = Visibility.Hidden;
             btnHistory.IsEnabled = true;
-            btnHistory.Focus();
+            FocusHistoryButton();
         }
 
         private void btnDownload_Click(object sender, RoutedEventArgs e)
         {
-            btnHistory.Focus();
+            FocusHistoryButton();
 
             string link = txtLink.Text;
             string from = txtFrom.Text;
@@ -485,13 +486,20 @@ namespace syosetuDownloader
             PopulateSiteLinks(cbSite);
             if (cbSite.Items.Count > 0) cbSite.SelectedIndex = 0;
 
-            // focus history button
-            btnHistory.Focus();
+            FocusHistoryButton();
+        }
 
+        private void FocusHistoryButton()
+        {
+            btnHistory.Focus();
+            ShowCaret();
+        }
+
+        private void ShowCaret()
+        {
             // force keyboard focus caret to appear
-            InputSimulator sim = new InputSimulator();
-            sim.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.MENU);
-            sim.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.MENU);
+            _sim.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.MENU);
+            _sim.Keyboard.KeyPress(WindowsInput.Native.VirtualKeyCode.MENU);
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
