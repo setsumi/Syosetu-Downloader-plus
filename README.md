@@ -1,5 +1,6 @@
 # Syosetu-Downloader-plus
-Download chapters from Syosetsu ni Narou and Kakuyomu
+
+GUI app for Windows to download chapters from Syosetsu ni Narou and Kakuyomu.
 
 **[Download Here](https://github.com/setsumi/Syosetu-Downloader-plus/releases/)**
 
