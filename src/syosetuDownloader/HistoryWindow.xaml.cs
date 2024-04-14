@@ -113,7 +113,7 @@ namespace syosetuDownloader
                     if (!item.Finished)
                     {
                         Syousetsu.Constants sc = new Syousetsu.Constants(item.Link, null, null);
-                        HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(item.Link, sc);
+                        HtmlDocument toc = Syousetsu.Methods.GetFullTableOfContents(item.Link, sc);
                         if (Syousetsu.Methods.IsValid(toc, sc))
                         {
                             item.Total = Syousetsu.Methods.GetTotalChapters(toc, sc);
