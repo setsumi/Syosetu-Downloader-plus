@@ -10,6 +10,7 @@ using HtmlAgilityPack;
 using System.Net;
 using System.IO;
 using System.Diagnostics;
+using Newtonsoft.Json.Linq;
 
 namespace Syousetsu
 {
@@ -123,7 +124,85 @@ namespace Syousetsu
             return ct;
         }
 
-        public static HtmlDocument GetTableOfContents(string link, Constants details)
+        /// <summary>
+        /// Get full table of contents.
+        /// Syousetsu - TOC has pagination, we fetch all pages from the website, pull the body parts out, and compose a new page including everything.
+        /// Kakuyomu - TOC is in JSON format, we return a fake webpage including the contents needed.
+        /// </summary>
+        /// <param name="link">Link to the front page of the novel</param>
+        /// <param name="details">Request details</param>
+        /// <returns>A full page of TOC including all pages</returns>
+        public static HtmlDocument GetFullTableOfContents(string link, Constants details)
+        {
+            if (details.Site() == Constants.SiteType.Syousetsu)
+            {
+                link = Regex.Replace(link, "\\?.*", "");
+                var firstPage = GetTableOfContents(link, details);
+                var lastPageLinkNode = firstPage.DocumentNode.SelectSingleNode("//a[@class='novelview_pager-last']");
+                if (lastPageLinkNode == null) return firstPage;
+                var lastPageLink = lastPageLinkNode.GetAttributeValue("href", null);
+                if (lastPageLink == null) return firstPage;
+                Regex r = new Regex("\\?p=([0-9]+)");
+                Match m = r.Match(lastPageLink);
+                var pages = Convert.ToInt32(m.Groups[1].Value);
+                var indexBox1 = firstPage.DocumentNode.SelectSingleNode("//div[@class='index_box']");
+                for (int i = 2; i <= pages; i++)
+                {
+                    var nextPage = GetTableOfContents(link + "/?p=" + i, details);
+                    if (nextPage == null) return firstPage;
+                    var indexBox = nextPage.DocumentNode.SelectSingleNode("//div[@class='index_box']");
+                    indexBox1.AppendChildren(indexBox.ChildNodes);
+                }
+                return firstPage;
+            }
+            else
+            {
+                var firstPage = GetTableOfContents(link, details);
+                var json = firstPage.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerText;
+                var jObj = JObject.Parse(json);
+                var doc = new HtmlDocument();
+                var node = HtmlNode.CreateNode("<html><head><title></title></head><body><h1 id=\"workTitle\"><a></a></h1><section class=\"widget-toc\"><div class=\"widget-toc-main\"><ol></ol></div></section></body></html>");
+                doc.DocumentNode.AppendChild(node);
+                var titleLink = doc.DocumentNode.SelectSingleNode("//a");
+                var olLink = doc.DocumentNode.SelectSingleNode("//ol");
+
+                var apolloStateNode = jObj["props"]["pageProps"]["__APOLLO_STATE__"];
+
+                // title
+                var workNode = apolloStateNode.SelectToken("$..firstPublicEpisodeUnion").First.Parent.Parent.Parent;
+                titleLink.AppendChild(HtmlTextNode.CreateNode((string)workNode["title"]));
+
+                // chapters
+                var tocRefList = apolloStateNode["TableOfContentsChapter"] != null
+                    ?
+                    apolloStateNode["TableOfContentsChapter"]["episodeUnions"]
+                        .Children()
+                        .Select(obj => obj["__ref"])
+                        .Values<string>()
+                        .Select(refId => apolloStateNode[refId])
+                        .Select(chap => new { id = (string)chap["id"], title = (string)chap["title"] })
+                    :
+                    workNode["tableOfContents"]
+                        .Children()
+                        .Select(obj => obj["__ref"])
+                        .Values<string>()
+                        .Select(refId => apolloStateNode[refId])
+                        .Select(obj => obj["episodeUnions"].Children())
+                        .SelectMany(obj => obj["__ref"])
+                        .Values<string>()
+                        .Select(refId => apolloStateNode[refId])
+                        .Select(chap => new { id = (string)chap["id"], title = (string)chap["title"] });
+                foreach (var refBlock in tocRefList)
+                {
+                    var liLink = HtmlNode.CreateNode(String.Format("<li class=\"widget-toc-episode\"><a href=\"/works/{0}/episodes/{1}\" class><span></span></a></li>", (string)workNode["id"], refBlock.id));
+                    liLink.SelectSingleNode("a/span").AppendChild(HtmlTextNode.CreateNode(refBlock.title));
+                    olLink.AppendChild(liLink);
+                }
+
+                return doc;
+            }
+        }
+        private static HtmlDocument GetTableOfContents(string link, Constants details)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(link);
             request.Method = "GET";
@@ -595,42 +674,45 @@ namespace Syousetsu
                 tocNode = doc.DocumentNode.SelectSingleNode("//section[@class='widget-toc']");
 
                 // remove left header
-                tocNode.ChildNodes["header"].Remove();
+                // tocNode.ChildNodes["header"].Remove();
             }
 
             HtmlNodeCollection cssNodeList = doc.DocumentNode.SelectNodes("//link[@rel='stylesheet']");
 
-            var cssNode = (from n in cssNodeList
-                           where n.Attributes["href"].Value.Contains("ncout.css") ||
-                           n.Attributes["href"].Value.Contains("ncout2.css") ||
-                           n.Attributes["href"].Value.Contains("kotei.css") || // ...
-                           n.Attributes["href"].Value.Contains("reset.css") || // syousetsu
-                           n.Attributes["href"].Value.Contains("kakuyomu.css") // kakuyomu
-                           select n).ToList();
-
-            //get css link and download
-            List<string> cssink = new List<string>();
-            string[] patterns = { "(href=\")(?<link>.+)(?=\" media)", "(href=\")(?<link>.+)(?=\">)" };
             string pattern;
             Regex r;
             Match m = Match.Empty;
-            foreach (HtmlNode node in cssNode)
+            if (cssNodeList != null)
             {
-                foreach (string p in patterns)
+                var cssNode = (from n in cssNodeList
+                               where n.Attributes["href"].Value.Contains("ncout.css") ||
+                               n.Attributes["href"].Value.Contains("ncout2.css") ||
+                               n.Attributes["href"].Value.Contains("kotei.css") || // ...
+                               n.Attributes["href"].Value.Contains("reset.css") || // syousetsu
+                               n.Attributes["href"].Value.Contains("kakuyomu.css") // kakuyomu
+                               select n).ToList();
+
+                //get css link and download
+                List<string> cssink = new List<string>();
+                string[] patterns = { "(href=\")(?<link>.+)(?=\" media)", "(href=\")(?<link>.+)(?=\">)" };
+                foreach (HtmlNode node in cssNode)
                 {
-                    r = new Regex(p);
-                    m = r.Match(node.OuterHtml);
-                    if (m.Groups["link"].Value.Length > 0) break;
+                    foreach (string p in patterns)
+                    {
+                        r = new Regex(p);
+                        m = r.Match(node.OuterHtml);
+                        if (m.Groups["link"].Value.Length > 0) break;
+                    }
+
+                    //if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
+                    //    pattern = "(href=\")(?<link>.+)(?=\" media)";
+                    //else // kakuyomu
+                    //    pattern = "(href=\")(?<link>.+)(?=\">)";
+
+                    cssink.Add(m.Groups["link"].Value);
                 }
-
-                //if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
-                //    pattern = "(href=\")(?<link>.+)(?=\" media)";
-                //else // kakuyomu
-                //    pattern = "(href=\")(?<link>.+)(?=\">)";
-
-                cssink.Add(m.Groups["link"].Value);
+                DownloadCss(details, cssink);
             }
-            DownloadCss(details, cssink);
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("<html>");

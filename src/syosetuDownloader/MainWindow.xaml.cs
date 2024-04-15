@@ -363,7 +363,7 @@ namespace syosetuDownloader
 
             Syousetsu.Constants sc = new Syousetsu.Constants(DlOptions.Link, DlOptions.ExeDir, DlOptions.DlDir);
             sc.AddChapter("", ""); // start chapters from 1
-            HtmlDocument toc = Syousetsu.Methods.GetTableOfContents(DlOptions.Link, sc);
+            HtmlDocument toc = Syousetsu.Methods.GetFullTableOfContents(DlOptions.Link, sc);
 
             if (!Syousetsu.Methods.IsValid(toc, sc))
             {
