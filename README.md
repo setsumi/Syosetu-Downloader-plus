@@ -18,4 +18,9 @@ GUI app for Windows to download chapters from Syosetsu ni Narou and Kakuyomu.
     - Sites links
     - Ability to open site and novel URL in browser
 
-Original project **[here](https://github.com/LordZero25/Syosetu-Downloader/)**
+## Contributors
+
+<a href="https://github.com/setsumi/Syosetu-Downloader-plus/graphs/contributors"><img src="https://contrib.rocks/image?repo=setsumi/Syosetu-Downloader-plus" alt="Contributors" /></a>
+
+## Original project
+ https://github.com/LordZero25/Syosetu-Downloader/
