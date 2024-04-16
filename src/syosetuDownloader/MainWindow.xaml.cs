@@ -70,6 +70,7 @@ namespace syosetuDownloader
 
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
         public bool historyMaximized = false;
+        public Size historyWndSize = new Size();
 
         public class NovelDrop
         {
@@ -523,6 +524,9 @@ namespace syosetuDownloader
         {
             HistoryWindow win = new HistoryWindow();
             win.DownloadFolder = DlOptions.DlDir;
+            if (historyWndSize.Width > 320) win.Width = historyWndSize.Width;
+            if (historyWndSize.Height > 200) win.Height = historyWndSize.Height;
+            if (historyMaximized) win.WindowState = WindowState.Maximized;
             win.ShowDialog();
         }
 
@@ -566,9 +570,10 @@ namespace syosetuDownloader
             sortInfo.Direction = dir;
             sortInfo.PropertyName = elem.Attribute("propertyName").Value;
             sortInfo.ColumnName = elem.Attribute("columnName").Value;
+            try { historyMaximized = bool.Parse(elem.Attribute("historyMaximized")?.Value); } catch { }
+            try { historyWndSize = Size.Parse(elem.Attribute("historyWndSize")?.Value); } catch { }
             try // newly added stuff
             {
-                historyMaximized = bool.Parse(elem.Attribute("historyMaximized")?.Value);
                 elem = fileElem.Element("config");
                 DlOptions.DlDir = elem.Attribute("dlfolder").Value;
             }
@@ -602,6 +607,10 @@ namespace syosetuDownloader
 
             attr = doc.CreateAttribute("historyMaximized");
             attr.Value = historyMaximized.ToString();
+            node.Attributes.Append(attr);
+
+            attr = doc.CreateAttribute("historyWndSize");
+            attr.Value = historyWndSize.ToString();
             node.Attributes.Append(attr);
 
             rootNode.AppendChild(node);
