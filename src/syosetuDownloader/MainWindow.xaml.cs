@@ -69,6 +69,7 @@ namespace syosetuDownloader
         readonly Shell32.Shell _shell;
 
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
+        public bool historyMaximized = false;
 
         public class NovelDrop
         {
@@ -567,6 +568,7 @@ namespace syosetuDownloader
             sortInfo.ColumnName = elem.Attribute("columnName").Value;
             try // newly added stuff
             {
+                historyMaximized = bool.Parse(elem.Attribute("historyMaximized")?.Value);
                 elem = fileElem.Element("config");
                 DlOptions.DlDir = elem.Attribute("dlfolder").Value;
             }
@@ -596,6 +598,10 @@ namespace syosetuDownloader
 
             attr = doc.CreateAttribute("columnName");
             attr.Value = sortInfo.ColumnName;
+            node.Attributes.Append(attr);
+
+            attr = doc.CreateAttribute("historyMaximized");
+            attr.Value = historyMaximized.ToString();
             node.Attributes.Append(attr);
 
             rootNode.AppendChild(node);

@@ -283,12 +283,14 @@ namespace syosetuDownloader
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             _parent.sortInfo = Util.GridViewTool.GetSort(viewHistoryList);
+            _parent.historyMaximized = WindowState == WindowState.Maximized;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Util.GridViewTool.SetSort(viewHistoryList, _parent.sortInfo);
             FocusListView();
+            if (_parent.historyMaximized) WindowState = WindowState.Maximized;
         }
     }
     // End of HistoryWindow ========================
