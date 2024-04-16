@@ -161,7 +161,7 @@ namespace Syousetsu
                 var json = firstPage.DocumentNode.SelectSingleNode("//script[@id='__NEXT_DATA__']").InnerText;
                 var jObj = JObject.Parse(json);
                 var doc = new HtmlDocument();
-                var node = HtmlNode.CreateNode("<html><head><title></title></head><body><h1 id=\"workTitle\"><a></a></h1><section class=\"widget-toc\"><div class=\"widget-toc-main\"><ol></ol></div></section></body></html>");
+                var node = HtmlNode.CreateNode("<html><head><link href=\"dummy\" rel=\"stylesheet\"/><title></title></head><body><h1 id=\"workTitle\"><a></a></h1><section class=\"widget-toc\"><div class=\"widget-toc-main\"><ol></ol></div></section></body></html>");
                 doc.DocumentNode.AppendChild(node);
                 var titleLink = doc.DocumentNode.SelectSingleNode("//a");
                 var olLink = doc.DocumentNode.SelectSingleNode("//ol");
@@ -180,7 +180,7 @@ namespace Syousetsu
                         .Select(obj => obj["__ref"])
                         .Values<string>()
                         .Select(refId => apolloStateNode[refId])
-                        .Select(chap => new { id = (string)chap["id"], title = (string)chap["title"] })
+                        .Select(chap => new { id = (string)chap["id"], title = (string)chap["title"], time = (DateTime)chap["publishedAt"] })
                     :
                     workNode["tableOfContents"]
                         .Children()
@@ -191,11 +191,12 @@ namespace Syousetsu
                         .SelectMany(obj => obj["__ref"])
                         .Values<string>()
                         .Select(refId => apolloStateNode[refId])
-                        .Select(chap => new { id = (string)chap["id"], title = (string)chap["title"] });
+                        .Select(chap => new { id = (string)chap["id"], title = (string)chap["title"], time = (DateTime)chap["publishedAt"] });
                 foreach (var refBlock in tocRefList)
                 {
-                    var liLink = HtmlNode.CreateNode(String.Format("<li class=\"widget-toc-episode\"><a href=\"/works/{0}/episodes/{1}\" class><span></span></a></li>", (string)workNode["id"], refBlock.id));
+                    var liLink = HtmlNode.CreateNode(String.Format("<li class=\"widget-toc-episode\"><a href=\"/works/{0}/episodes/{1}\" class><span></span><time></time></a></li>", (string)workNode["id"], refBlock.id));
                     liLink.SelectSingleNode("a/span").AppendChild(HtmlTextNode.CreateNode(refBlock.title));
+                    liLink.SelectSingleNode("a/time").AppendChild(HtmlTextNode.CreateNode(refBlock.time.ToString("yyyy'/'MM'/'dd")));
                     olLink.AppendChild(liLink);
                 }
 
@@ -688,8 +689,7 @@ namespace Syousetsu
                                where n.Attributes["href"].Value.Contains("ncout.css") ||
                                n.Attributes["href"].Value.Contains("ncout2.css") ||
                                n.Attributes["href"].Value.Contains("kotei.css") || // ...
-                               n.Attributes["href"].Value.Contains("reset.css") || // syousetsu
-                               n.Attributes["href"].Value.Contains("kakuyomu.css") // kakuyomu
+                               n.Attributes["href"].Value.Contains("reset.css")    // syousetsu
                                select n).ToList();
 
                 //get css link and download
@@ -718,7 +718,7 @@ namespace Syousetsu
             sb.AppendLine("<html>");
             sb.AppendLine("<head>");
             sb.AppendLine("\t<meta charset=\"UTF-8\">");
-            sb.AppendLine("\t<link rel=\"stylesheet\" type=\"text/css\" href=\"" + details.SeriesCode + ".css\" media=\"screen,print\" />");
+            sb.AppendLine("\t<link rel=\"stylesheet\" type=\"text/css\" href=\"./" + details.SeriesCode + ".css\" media=\"screen,print\" />");
             if (ptitleNode != null) sb.AppendLine(ptitleNode.OuterHtml);
             sb.AppendLine("</head>");
 
@@ -824,22 +824,26 @@ namespace Syousetsu
             string cssfile = Path.Combine(details.Path, details.SeriesTitle, details.SeriesCode + ".css");
             File.WriteAllText(cssfile, "");
 
-            foreach (string f in link)
+            // download CSS only for syousetsu since kakuyomu is fake page
+            if (details.Site() == Constants.SiteType.Syousetsu)
             {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(f);
-                request.Method = "GET";
-                request.UserAgent = details.UserAgent;
-
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                var stream = response.GetResponseStream();
-
-                using (StreamReader reader = new StreamReader(stream))
+                foreach (string f in link)
                 {
-                    string css = reader.ReadToEnd();
-                    using (StreamWriter writer = File.AppendText(cssfile))
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(f);
+                    request.Method = "GET";
+                    request.UserAgent = details.UserAgent;
+
+                    HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                    var stream = response.GetResponseStream();
+
+                    using (StreamReader reader = new StreamReader(stream))
                     {
-                        writer.Write(css);
-                        writer.Close();
+                        string css = reader.ReadToEnd();
+                        using (StreamWriter writer = File.AppendText(cssfile))
+                        {
+                            writer.Write(css);
+                            writer.Close();
+                        }
                     }
                 }
             }
@@ -850,7 +854,9 @@ namespace Syousetsu
                 if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
                     writer.Write("\n.index_box{width:100%!important;}");
                 else // kakuyomu
-                    writer.Write("\n.widget-toc-main{width:100%!important;float:none!important;}");
+                    writer.Write(@".widget-toc-episode{border-bottom:1px solid transparent;}
+.widget-toc-episode:hover{border-bottom:1px solid #99ddff;}a{text-decoration:none;}time{float:right;}
+span:active,span:focus,span:hover,time:active,time:focus,time:hover{color:#339933;}::marker{color:transparent;}");
                 writer.Close();
             }
         }
