@@ -376,7 +376,7 @@ namespace Syousetsu
             if (details.Site() == Constants.SiteType.Syousetsu) // syosetu
             {
                 string pattern = "(href=\"/)(?<series>.+)/(?<num>.+)/\">(?<title>.+)(?=</a>)";
-                Regex r = new Regex(pattern);
+                Regex r = new Regex(pattern, RegexOptions.Singleline);
 
                 HtmlNodeCollection chapterNode = doc.DocumentNode.SelectNodes("//div[@class='index_box']/dl/dd[@class='subtitle']");
                 Match m = r.Match(chapterNode.Last().OuterHtml);
