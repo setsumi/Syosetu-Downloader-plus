@@ -47,6 +47,9 @@ namespace Syousetsu
         List<string> _userAgentList = new List<string>();
         int _lastDownloaded = 0;
 
+        private static int _net_timeout = 10000;
+        private static int _net_retry_count = 3;
+
         // Constructor
         public Constants(string link, string exedir, string dldir)
         {
@@ -204,5 +207,8 @@ namespace Syousetsu
                 }
             }
         }
+
+        public static int NetTimeout { get { return _net_timeout; } set { _net_timeout = value; } }
+        public static int NetRetryCount { get { return _net_retry_count; } set { _net_retry_count = value; } }
     }
 }

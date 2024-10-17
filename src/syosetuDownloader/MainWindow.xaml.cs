@@ -65,7 +65,7 @@ namespace syosetuDownloader
         static readonly Random _random = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
         static readonly InputSimulator _sim = new InputSimulator();
 
-        readonly string _version = "2.4.0 plus 25";
+        readonly string _version = "2.4.0 plus 26";
         readonly Shell32.Shell _shell;
 
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
@@ -576,6 +576,8 @@ namespace syosetuDownloader
             {
                 elem = fileElem.Element("config");
                 DlOptions.DlDir = elem.Attribute("dlfolder").Value;
+                Syousetsu.Constants.NetTimeout = int.Parse(elem.Attribute("netTimeoutMs").Value);
+                Syousetsu.Constants.NetRetryCount = int.Parse(elem.Attribute("netRetryCount").Value);
             }
             catch { }
         }
@@ -619,6 +621,14 @@ namespace syosetuDownloader
 
             attr = doc.CreateAttribute("dlfolder");
             attr.Value = DlOptions.DlDir;
+            node.Attributes.Append(attr);
+
+            attr = doc.CreateAttribute("netTimeoutMs");
+            attr.Value = Syousetsu.Constants.NetTimeout.ToString();
+            node.Attributes.Append(attr);
+
+            attr = doc.CreateAttribute("netRetryCount");
+            attr.Value = Syousetsu.Constants.NetRetryCount.ToString();
             node.Attributes.Append(attr);
 
             rootNode.AppendChild(node);
