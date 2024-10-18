@@ -43,12 +43,12 @@ namespace Syousetsu
         string _seriesCode = String.Empty;
         string _fileNameFormat = String.Empty;
         List<Chapter> _chapters = new List<Chapter>();
-        const string userAgent = "Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/70.0";
+        const string userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
         List<string> _userAgentList = new List<string>();
         int _lastDownloaded = 0;
 
-        private static int _net_timeout = 10000;
-        private static int _net_retry_count = 3;
+        private static int _net_timeout = 5000;
+        private static int _net_retry_count = 5;
 
         // Constructor
         public Constants(string link, string exedir, string dldir)

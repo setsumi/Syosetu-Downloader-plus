@@ -533,7 +533,7 @@ namespace Syousetsu
 
                 if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
                 {
-                    if (doc.DocumentNode.SelectSingleNode("//div[@class='p-novel__body']").InnerHtml.Contains("<img"))
+                    if (doc.DocumentNode.SelectSingleNode("//div[contains(@class,'p-novel__text')]").InnerHtml.Contains("<img"))
                     {
                         string subLink = String.Format("{0}{1}", details.Link, current);
                         chapter[1] += String.Format("\n\n===\n\nContains image(s): {0}\n\n===", subLink);
@@ -562,7 +562,7 @@ namespace Syousetsu
 
                 if (details.Site() == Constants.SiteType.Syousetsu) // syousetsu
                 {
-                    if (doc.DocumentNode.SelectSingleNode("//body"/*"//div[@class='p-novel__body']"*/).InnerHtml.Contains("<img"))
+                    if (doc.DocumentNode.SelectSingleNode("//div[contains(@class,'p-novel__text')]").InnerHtml.Contains("<img"))
                     {
                         string subLink = String.Format("{0}{1}", details.Link, current);
                         chapter[1] += String.Format("\n\n===\n\n<a href=\"{0}\">Contains image(s)</a>\n\n===", subLink);
