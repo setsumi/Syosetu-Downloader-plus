@@ -8,6 +8,7 @@ GUI app for Windows to download chapters from Syosetsu ni Narou and Kakuyomu.
 - HTML titles
 - TOC: Series name, novel name, author name
 - Kakuyomu support
+- Parameters `netTimeoutMs` and `netRetryCount` in `config.xml`
 - GUI:
     - :star: **Helpful tooltips (on mouse hover)** :star: :fire::fire::fire:
     - Download history manager
