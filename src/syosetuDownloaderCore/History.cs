@@ -68,7 +68,11 @@ namespace Syousetsu
 
         public History()
         {
-            // check directory
+            CheckDirectory();
+        }
+
+        public static void CheckDirectory()
+        {
             if (!System.IO.Directory.Exists(_folder))
             {
                 System.IO.Directory.CreateDirectory(_folder);

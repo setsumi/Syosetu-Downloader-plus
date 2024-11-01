@@ -819,6 +819,7 @@ span:active,span:focus,span:hover,time:active,time:focus,time:hover{color:#33993
                 request.UserAgent = details.UserAgent;
                 request.CookieContainer = details.SyousetsuCookie;
                 request.Timeout = Constants.NetTimeout;
+                //request.Proxy = new WebProxy("localhost", 10809);
                 //When you get the response from the website, the cookies will be stored
                 //automatically in "_cookies".
                 response = (HttpWebResponse)request.GetResponse();

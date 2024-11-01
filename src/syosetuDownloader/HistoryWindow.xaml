@@ -120,7 +120,7 @@
                         <GridViewColumn Header="Downloaded"
                                 DisplayMemberBinding="{Binding Downloaded}"
                                 util:GridViewSort.PropertyName="Downloaded"/>
-                        <GridViewColumn Header="Total"
+                        <GridViewColumn Header="Total" Width="40"
                                 DisplayMemberBinding="{Binding Total}"
                                 util:GridViewSort.PropertyName="Total"/>
                         <GridViewColumn Header="New"
