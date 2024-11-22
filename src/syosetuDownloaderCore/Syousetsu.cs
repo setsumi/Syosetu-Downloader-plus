@@ -148,7 +148,7 @@ namespace Syousetsu
                 var indexBox1 = firstPage.DocumentNode.SelectSingleNode("//div[@class='p-eplist']");
                 for (int i = 2; i <= pages; i++)
                 {
-                    var nextPage = GetTableOfContents(link + "/?p=" + i, details);
+                    var nextPage = GetTableOfContents(link + $"{(link.EndsWith("/") ? "" : "/")}?p=" + i, details);
                     if (nextPage == null) return firstPage;
                     var indexBox = nextPage.DocumentNode.SelectSingleNode("//div[@class='p-eplist']");
                     indexBox1.AppendChildren(indexBox.ChildNodes);
@@ -807,14 +807,16 @@ span:active,span:focus,span:hover,time:active,time:focus,time:hover{color:#33993
         public static string DownloadHttpText(string link, Constants details)
         {
             string returnText = "";
-            HttpWebResponse response;
+            HttpWebRequest request;
+            HttpWebResponse response = null;
             int trycount;
         tryRetry:
             trycount = Constants.NetRetryCount;
         tryAgain:
             try
             {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(link);
+                request = (HttpWebRequest)WebRequest.Create(link);
+                request.KeepAlive = false;
                 request.Method = "GET";
                 request.UserAgent = details.UserAgent;
                 request.CookieContainer = details.SyousetsuCookie;
@@ -822,6 +824,7 @@ span:active,span:focus,span:hover,time:active,time:focus,time:hover{color:#33993
                 //request.Proxy = new WebProxy("localhost", 10809);
                 //When you get the response from the website, the cookies will be stored
                 //automatically in "_cookies".
+                try { response?.Close(); } catch { }
                 response = (HttpWebResponse)request.GetResponse();
             }
             catch (WebException ex)
@@ -830,8 +833,8 @@ span:active,span:focus,span:hover,time:active,time:focus,time:hover{color:#33993
                 if (trycount <= 0)
                 {
                     System.Windows.Forms.DialogResult result = System.Windows.Forms.MessageBox.Show(
-                        $"Operation failed {Constants.NetRetryCount} times in a row.{Environment.NewLine}{ex.GetType()}: {ex.Message}", "Narou Downloader",
-                        System.Windows.Forms.MessageBoxButtons.RetryCancel, System.Windows.Forms.MessageBoxIcon.Warning);
+                        $"{link}{Environment.NewLine}Operation failed {Constants.NetRetryCount} times in a row.{Environment.NewLine}{ex.GetType()}: {ex.Message}",
+                        "Narou Downloader", System.Windows.Forms.MessageBoxButtons.RetryCancel, System.Windows.Forms.MessageBoxIcon.Warning);
                     if (result == System.Windows.Forms.DialogResult.Retry)
                         goto tryRetry;
                     else
@@ -851,20 +854,23 @@ span:active,span:focus,span:hover,time:active,time:focus,time:hover{color:#33993
         public static byte[] DownloadHttpBytes(string link, Constants details)
         {
             byte[] returnBytes;
-            HttpWebResponse response;
+            HttpWebRequest request;
+            HttpWebResponse response = null;
             int trycount;
         tryRetry:
             trycount = Constants.NetRetryCount;
         tryAgain:
             try
             {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(link);
+                request = (HttpWebRequest)WebRequest.Create(link);
+                request.KeepAlive = false;
                 request.Method = "GET";
                 request.UserAgent = details.UserAgent;
                 request.CookieContainer = details.SyousetsuCookie;
                 request.Timeout = Constants.NetTimeout;
                 //When you get the response from the website, the cookies will be stored
                 //automatically in "_cookies".
+                try { response?.Close(); } catch { }
                 response = (HttpWebResponse)request.GetResponse();
             }
             catch (WebException ex)
@@ -873,8 +879,8 @@ span:active,span:focus,span:hover,time:active,time:focus,time:hover{color:#33993
                 if (trycount <= 0)
                 {
                     System.Windows.Forms.DialogResult result = System.Windows.Forms.MessageBox.Show(
-                        $"Operation failed {Constants.NetRetryCount} times in a row.{Environment.NewLine}{ex.GetType()}: {ex.Message}", "Narou Downloader",
-                        System.Windows.Forms.MessageBoxButtons.RetryCancel, System.Windows.Forms.MessageBoxIcon.Warning);
+                        $"{link}{Environment.NewLine}Operation failed {Constants.NetRetryCount} times in a row.{Environment.NewLine}{ex.GetType()}: {ex.Message}",
+                        "Narou Downloader", System.Windows.Forms.MessageBoxButtons.RetryCancel, System.Windows.Forms.MessageBoxIcon.Warning);
                     if (result == System.Windows.Forms.DialogResult.Retry)
                         goto tryRetry;
                     else

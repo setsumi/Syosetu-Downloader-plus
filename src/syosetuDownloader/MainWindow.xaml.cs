@@ -65,7 +65,7 @@ namespace syosetuDownloader
         static readonly Random _random = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
         static readonly InputSimulator _sim = new InputSimulator();
 
-        readonly string _version = "2.4.0 plus 27";
+        readonly string _version = "2.4.0 plus 28";
         readonly Shell32.Shell _shell;
 
         public Util.GridViewTool.SortInfo sortInfo = new Util.GridViewTool.SortInfo();
