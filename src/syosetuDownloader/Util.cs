@@ -30,7 +30,7 @@ namespace Util
             if (string.IsNullOrEmpty(currentSort.PropertyName) ||
                 0 != string.CompareOrdinal(currentSort.ColumnName, sort.ColumnName))
             { // different column
-                number = sort.Direction == ListSortDirection.Descending ? 2 : 1;
+                number = sort.Direction == ListSortDirection.Descending ? 1 : 2;
             }
             else
             { // same column
