@@ -182,7 +182,7 @@ namespace Syousetsu
                         .Select(refId => apolloStateNode[refId])
                         .Select(chap => new { id = (string)chap["id"], title = (string)chap["title"], time = (DateTime)chap["publishedAt"] })
                     :
-                    workNode["tableOfContents"]
+                    (workNode["tableOfContentsV2"] ?? workNode["tableOfContents"])
                         .Children()
                         .Select(obj => obj["__ref"])
                         .Values<string>()
